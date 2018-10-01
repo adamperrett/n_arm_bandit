@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="PACMAN" />
+    <orderEntry type="module" module-name="DataSpecification" />
+    <orderEntry type="module" module-name="SpiNNMachine" />
+    <orderEntry type="module" module-name="SpiNNMan" />
+    <orderEntry type="module" module-name="sPyNNaker" />
+    <orderEntry type="module" module-name="SpiNNUtils" />
+    <orderEntry type="module" module-name="peasnaker" />
+    <orderEntry type="module" module-name="spalloc" />
+    <orderEntry type="module" module-name="spalloc_server" />
+    <orderEntry type="module" module-name="spinn_common" />
+    <orderEntry type="module" module-name="sPyNNaker8" />
+  </component>
+</module>
