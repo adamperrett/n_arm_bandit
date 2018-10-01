@@ -16,7 +16,7 @@ from spinn_front_end_common.utilities import helpful_functions, constants
 # BanditMachineVertex
 # ----------------------------------------------------------------------------
 class BanditMachineVertex(MachineVertex):
-    _BREAKOUT_REGIONS = Enum(
+    _BANDIT_REGIONS = Enum(
         value="_BANDIT_REGIONS",
         names=[('SYSTEM', 0),
                ('BANDIT', 1),

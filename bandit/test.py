@@ -12,11 +12,11 @@ probabilities = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
 input_pop = p.Population(len(probabilities), p.SpikeSourcePoisson(rate=5))
 
-bandit = Bandit(probabilities, 200)
+# bandit = Bandit(probabilities, 200)
 
-arms_pop = p.Population(1, bandit)#Bandit())#(probabilities, 200))
+arms_pop = p.Population(1, p.Bandit(probabilities, 200))
 
-p.Projection(input_pop, arms_pop, p.AllToAllConnector)
+p.Projection(input_pop, arms_pop, p.AllToAllConnector())
 
 p.run(10000)
 

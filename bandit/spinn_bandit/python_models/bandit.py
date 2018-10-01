@@ -117,7 +117,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
     # **HACK** for Projection to connect a synapse type is required
     synapse_type = BanditSynapseType()
 
-    def __init__(self, arms=default_parameters['arms'],
+    def __init__(self, n_neurons, arms=default_parameters['arms'],
                  reward_delay=default_parameters['reward_delay'],
                  constraints=default_parameters['constraints'],
                  label=default_parameters['label'],
