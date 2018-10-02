@@ -105,7 +105,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
 
     BANDIT_REGION_BYTES = 24
     ARMS_REGION_BYTES = 80
-    MAX_SIM_DURATION = 1000 * 60 * 60 * 24 * 7  # 1 week
+    MAX_SIM_DURATION = 1000 * 60 * 60 * 24  # 1 day
 
     # parameters expected by PyNN
     default_parameters = {
@@ -115,7 +115,8 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         'label': "Bandit",
         'incoming_spike_buffer_size': None,
         'duration': MAX_SIM_DURATION,
-        'arms': [0.1, 0.9]}
+        'arms': [0.1, 0.9],
+        'random_seed': 1}
 
     # **HACK** for Projection to connect a synapse type is required
     synapse_type = BanditSynapseType()
@@ -125,7 +126,8 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
                  constraints=default_parameters['constraints'],
                  label=default_parameters['label'],
                  incoming_spike_buffer_size=default_parameters['incoming_spike_buffer_size'],
-                 simulation_duration_ms=default_parameters['duration']):
+                 simulation_duration_ms=default_parameters['duration'],
+                 rand_seed=default_parameters['random_seed']):
         # **NOTE** n_neurons currently ignored - width and height will be
         # specified as additional parameters, forcing their product to be
         # duplicated in n_neurons seems pointless
@@ -137,11 +139,12 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
 
         self._no_arms = len(arms)
         self._n_neurons = self._no_arms
+        self._rand_seed = rand_seed
 
         self._reward_delay = reward_delay
 
         # used to define size of recording region
-        self._recording_size = int((simulation_duration_ms / 10000.) * 4)
+        self._recording_size = int((simulation_duration_ms / 1000.) * 4)
 
         # Superclasses
         ApplicationVertex.__init__(
@@ -265,6 +268,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         ip_tags = tags.get_ip_tags_for_vertex(self) or []
         spec.write_value(self._reward_delay, data_type=DataType.UINT32)
         spec.write_value(self._no_arms, data_type=DataType.UINT32)
+        spec.write_value(self._rand_seed, data_type=DataType.UINT32)
         # Write the data - Arrays must be 32-bit values, so convert
         ##TODO fix the values to send properly
         data = numpy.array(self._arms, dtype=numpy.uint32)

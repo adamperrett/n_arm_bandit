@@ -259,12 +259,13 @@ def test_pop(pop, tracker):
             if i == 0 or shared_probabilities == False:
                 arms = []
                 total = 1
-                for i in range(number_of_arms-1):
+                for j in range(number_of_arms-1):
                     arms.append(random.uniform(0, total))
-                    total -= arms[i]
+                    total -= arms[j]
                 arms.append(total)
             # Create bandit population
-            bandit_pops.append(p.Population(1, p.Bandit(arms, duration_of_trial, label="bandit {}".format(i))))
+            random_seed = np.random.randint(0xffff)
+            bandit_pops.append(p.Population(1, p.Bandit(arms, duration_of_trial, rand_seed=random_seed, label="bandit {}".format(i))))
             # print "after creating bandit"
             # tracker.print_diff()
 
@@ -272,7 +273,7 @@ def test_pop(pop, tracker):
             receive_on_pops.append(p.Population(receive_pop_size, p.IF_cond_exp(), label="receive_pop {}".format(i)))
             # print "after creating receive pop"
             # tracker.print_diff()
-            p.Projection(bandit_pops[i], receive_on_pops[i], p.OneToOneConnector())
+            p.Projection(bandit_pops[i], receive_on_pops[i], p.OneToOneConnector(), p.StaticSynapse(weight=0.1))
             # print "after creating receive projection"
             # tracker.print_diff()
 

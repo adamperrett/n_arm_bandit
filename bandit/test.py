@@ -7,6 +7,7 @@ from spinn_bandit import Bandit
 import pylab
 from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 p.setup(timestep=1.0)
@@ -21,7 +22,7 @@ output_pop2 = p.Population(2, p.IF_cond_exp())
 
 #neuron ID 0 = reward
 #neuron ID 1 = no reward
-arms_pop = p.Population(1, p.Bandit(probabilities, 200))
+arms_pop = p.Population(1, p.Bandit(probabilities, 200, np.random.random()))
 
 input_pop.record('spikes')
 # arms_pop.record('spikes')
