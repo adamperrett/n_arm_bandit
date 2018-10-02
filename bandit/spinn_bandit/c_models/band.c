@@ -170,11 +170,21 @@ static bool initialize(uint32_t *timer_period)
     address_t arms_region = data_specification_get_region(REGION_ARMS, address);
     reward_delay = arms_region[0];
     number_of_arms = arms_region[1];
-    arm_probabilities = (uint32_t *)arms_region[2];
+    arm_probabilities = (uint32_t *)&arms_region[2];
+//    double arm_probabilities[10] = {0}
+//    for (int i=1, i<number_of_arms, i=i+1){
+//        log_info("converting arm prob %d, stage ", temp_arm_probabilities[i] i)
+//        arm_probabilities[i] = (double)temp_arm_probabilities[i] / 1000.0
+//        log_info("probs after = %d", arm_probabilities)
+//    }
     //TODO check this prints right, ybug read the address
-    log_info("%d", (uint32_t *)arms_region[0]);
-    log_info("%d", (uint32_t *)arms_region[1]);
-    log_info("%d", (uint32_t *)arms_region[2]);
+    log_info("r1 %d", (uint32_t *)arms_region[0]);
+    log_info("r2 %d", (uint32_t *)arms_region[1]);
+    log_info("r3 0x%x", (uint32_t *)arms_region[2]);
+    log_info("r4 0x%x", arms_region[2]);
+    log_info("r5 0x%x", arm_probabilities);
+//    log_info("r6 0x%x", *arm_probabilities);
+    log_info("r6 0x%x", &arm_probabilities);
 
 
     log_info("Initialise: completed successfully");
@@ -196,18 +206,25 @@ bool was_there_a_reward(){
             choice = i;
             highest_value = arm_choices[i];
         }
-        log_info("%d was spiked %d times", i, arm_choices[i]);
+        log_info("%d was spiked %d times, prob = %u", i, arm_choices[i], arm_probabilities[i]);
         arm_choices[i] = 0;
     }
-    double probability_roll = (double)rand() / (double)RAND_MAX;
-    log_info("roll was %d and prob was %d", probability_roll, arm_probabilities[choice]);
+    uint32_t probability_roll;
+//    double max = RAND_MAX;
+//    log_info("rand = %d, max = %d", rand_no, RAND_MAX);
+    probability_roll = rand();
+    log_info("prob_roll = %d", probability_roll);
+    log_info("roll was %d and prob was %d, converted = %d", probability_roll, arm_probabilities[choice], (arm_probabilities[choice] / RAND_MAX));
     if(probability_roll < arm_probabilities[choice]){
         log_info("reward given");
         return true;
     }
-    else{
+    else if(probability_roll > arm_probabilities[choice]){
         log_info("no cigar");
         return false;
+    }
+    else{
+        log_info("shit broke");
     }
 }
 

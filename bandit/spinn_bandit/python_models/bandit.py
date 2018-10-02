@@ -56,6 +56,8 @@ from bandit_machine_vertex import BanditMachineVertex
 
 import numpy
 
+from data_specification.enums.data_type import DataType
+
 NUMPY_DATA_ELEMENT_TYPE = numpy.double
 
 # ----------------------------------------------------------------------------
@@ -102,6 +104,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         pass
 
     BANDIT_REGION_BYTES = 24
+    ARMS_REGION_BYTES = 80
     MAX_SIM_DURATION = 1000 * 60 * 60 * 24 * 7  # 1 week
 
     # parameters expected by PyNN
@@ -109,7 +112,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         'reward_delay': 200.0,
         'constraints': None,
         'rate': 1.0,
-        'label': "Breakout",
+        'label': "Bandit",
         'incoming_spike_buffer_size': None,
         'duration': MAX_SIM_DURATION,
         'arms': [0.1, 0.9]}
@@ -127,7 +130,10 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         # specified as additional parameters, forcing their product to be
         # duplicated in n_neurons seems pointless
 
-        self._arms = arms
+        arms_list = []
+        for arm in arms:
+            arms_list.append(numpy.uint32(arm*0xffffffff))
+        self._arms = arms_list
 
         self._no_arms = len(arms)
         self._n_neurons = self._no_arms
@@ -187,8 +193,6 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
     @property
     @overrides(ApplicationVertex.n_atoms)
     def n_atoms(self):
-        # **TODO** should we calculate this automatically
-        # based on log2 of width and height?
         return self._n_neurons
 
     # ------------------------------------------------------------------------
@@ -227,6 +231,9 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         spec.reserve_memory_region(
             BanditMachineVertex._BANDIT_REGIONS.RECORDING.value,
             recording_utilities.get_recording_header_size(1))
+        spec.reserve_memory_region(
+            region=BanditMachineVertex._BANDIT_REGIONS.ARMS.value,
+            size=self.ARMS_REGION_BYTES, label='BanditArms')
 
         # Write setup region
         spec.comment("\nWriting setup region:\n")
@@ -256,10 +263,11 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         spec.switch_write_focus(
             BanditMachineVertex._BANDIT_REGIONS.ARMS.value)
         ip_tags = tags.get_ip_tags_for_vertex(self) or []
-        spec.write_value(self._reward_delay, data_type=NUMPY_DATA_ELEMENT_TYPE)
-        spec.write_value(self._no_arms, data_type=NUMPY_DATA_ELEMENT_TYPE)
+        spec.write_value(self._reward_delay, data_type=DataType.UINT32)
+        spec.write_value(self._no_arms, data_type=DataType.UINT32)
         # Write the data - Arrays must be 32-bit values, so convert
-        data = numpy.array(self._arms, dtype=NUMPY_DATA_ELEMENT_TYPE)
+        ##TODO fix the values to send properly
+        data = numpy.array(self._arms, dtype=numpy.uint32)
         spec.write_array(data.view(numpy.uint32))
 
 
