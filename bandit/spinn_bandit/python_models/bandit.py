@@ -116,7 +116,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         'incoming_spike_buffer_size': None,
         'duration': MAX_SIM_DURATION,
         'arms': [0.1, 0.9],
-        'random_seed': 1}
+        'random_seed': [1,2,3,4]}
 
     # **HACK** for Projection to connect a synapse type is required
     synapse_type = BanditSynapseType()
@@ -268,9 +268,11 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         ip_tags = tags.get_ip_tags_for_vertex(self) or []
         spec.write_value(self._reward_delay, data_type=DataType.UINT32)
         spec.write_value(self._no_arms, data_type=DataType.UINT32)
-        spec.write_value(self._rand_seed, data_type=DataType.UINT32)
+        spec.write_value(self._rand_seed[0], data_type=DataType.UINT32)
+        spec.write_value(self._rand_seed[1], data_type=DataType.UINT32)
+        spec.write_value(self._rand_seed[2], data_type=DataType.UINT32)
+        spec.write_value(self._rand_seed[3], data_type=DataType.UINT32)
         # Write the data - Arrays must be 32-bit values, so convert
-        ##TODO fix the values to send properly
         data = numpy.array(self._arms, dtype=numpy.uint32)
         spec.write_array(data.view(numpy.uint32))
 

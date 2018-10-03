@@ -20,6 +20,7 @@
 // Front end common includes
 #include <data_specification.h>
 #include <simulation.h>
+#include "random.h"
 
 #include <recording.h>
 
@@ -73,9 +74,11 @@ const int max_number_of_arms = 8;
 
 uint32_t *arm_probabilities;
 
+mars_kiss64_seed_t kiss_seed;
+
 int number_of_arms;
 
-uint32_t rand_seed;
+int rand_seed;
 
 int arm_choices[8] = {0};
 
@@ -172,8 +175,12 @@ static bool initialize(uint32_t *timer_period)
     address_t arms_region = data_specification_get_region(REGION_ARMS, address);
     reward_delay = arms_region[0];
     number_of_arms = arms_region[1];
-    rand_seed = arms_region[2];
-    arm_probabilities = (uint32_t *)&arms_region[3];
+//    rand_seed = arms_region[2];
+    kiss_seed[0] = arms_region[2];
+    kiss_seed[1] = arms_region[3];
+    kiss_seed[2] = arms_region[4];
+    kiss_seed[3] = arms_region[5];
+    arm_probabilities = (uint32_t *)&arms_region[6];
 //    double arm_probabilities[10] = {0}
 //    for (int i=1, i<number_of_arms, i=i+1){
 //        log_info("converting arm prob %d, stage ", temp_arm_probabilities[i] i)
@@ -181,11 +188,12 @@ static bool initialize(uint32_t *timer_period)
 //        log_info("probs after = %d", arm_probabilities)
 //    }
     validate_mars_kiss64_seed(rand_seed);
+//    srand(rand_seed);
     //TODO check this prints right, ybug read the address
     log_info("r1 %d", (uint32_t *)arms_region[0]);
     log_info("r2 %d", (uint32_t *)arms_region[1]);
     log_info("rand3. %d", (uint32_t *)arms_region[2]);
-    log_info("rand3 0x%x", (uint32_t *)arms_region[2]);
+    log_info("rand3 0x%x", (uint32_t *)arms_region[3]);
     log_info("r4 0x%x", arms_region[3]);
     log_info("r5 0x%x", arm_probabilities);
 //    log_info("r6 0x%x", *arm_probabilities);
@@ -198,11 +206,13 @@ static bool initialize(uint32_t *timer_period)
 }
 
 bool was_there_a_reward(){
-    int choice = mars_kiss64_seed(rand_seed) % number_of_arms;
+    int choice = mars_kiss64_seed(kiss_seed) % number_of_arms;
+//    int choice = rand() % number_of_arms;
     int highest_value = 0;
     if(arm_choices[0] >= highest_value){
         if(arm_choices[0] == highest_value){
-            if (mars_kiss64_seed(rand_seed) % 2 == 0){
+            if (mars_kiss64_seed(kiss_seed) % 2 == 0){
+//            if (rand() % 2 == 0){
                 choice = 0;
                 highest_value = arm_choices[0];
             }
@@ -212,12 +222,13 @@ bool was_there_a_reward(){
             highest_value = arm_choices[0];
         }
     }
-    log_info("0 was spiked %d times", arm_choices[0]);
+    log_info("0 was spiked %d times, prob = %u", arm_choices[0], arm_probabilities[0]);
     arm_choices[0] = 0;
     for(int i=1; i<number_of_arms; i=i+1){
         if (arm_choices[i] >= highest_value){
             if(arm_choices[i] == highest_value){
-                if (mars_kiss64_seed(rand_seed) % 2 == 0){
+                if (mars_kiss64_seed(kiss_seed) % 2 == 0){
+//                if (rand() % 2 == 0){
                     choice = i;
                     highest_value = arm_choices[i];
                 }
@@ -233,9 +244,10 @@ bool was_there_a_reward(){
     uint32_t probability_roll;
 //    double max = RAND_MAX;
 //    log_info("rand = %d, max = %d", rand_no, RAND_MAX);
-    probability_roll = mars_kiss64_seed(rand_seed);
+    probability_roll = mars_kiss64_seed(kiss_seed);
+//    probability_roll = rand();
     log_info("prob_roll = %u", probability_roll);
-    log_info("roll was %u and prob was %u, max = %u", probability_roll, arm_probabilities[choice], RAND_MAX);
+    log_info("roll was %u and prob was %u, max = %u %d", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
     if(probability_roll < arm_probabilities[choice]){
         log_info("reward given");
         return true;
@@ -368,8 +380,8 @@ void c_main(void)
   log_info("simulation_ticks %d",simulation_ticks);
 
   // Register callback
-//  spin1_callback_on(TIMER_TICK, timer_callback, 2);
-//  spin1_callback_on(MC_PACKET_RECEIVED, mc_packet_received_callback, -1);
+  spin1_callback_on(TIMER_TICK, timer_callback, 2);
+  spin1_callback_on(MC_PACKET_RECEIVED, mc_packet_received_callback, -1);
 
   _time = UINT32_MAX;
 
