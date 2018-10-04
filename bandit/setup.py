@@ -26,7 +26,7 @@ for dirname, dirnames, filenames in os.walk(main_package_dir):
 # **HACK** spynnaker doesn't have __version__ set properly
 # therefore >= 3.0.0, < 4.0.0 doesn't work correctly
 setup(
-    name="bandit",
+    name="spinn_bandit",
     version="0.1.1",
     license="GNU GPLv3.0",
     packages=find_packages(),
