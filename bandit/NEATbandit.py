@@ -218,7 +218,7 @@ def test_pop(pop, tracker):
     #test the whole population and return scores
     global all_fails
     print "start"
-    print "arms:", number_of_arms, "- complimentary:", complimentary, "- shared:", shared_probabilities, "- fails:", all_fails
+    print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, "- shared:", shared_probabilities, "- fails:", all_fails
     gen_stats(pop)
     save_champion()
     # tracker.print_diff()
