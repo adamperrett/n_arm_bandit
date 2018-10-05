@@ -437,7 +437,7 @@ def save_champion():
 # gc.set_debug(gc.DEBUG_LEAK)
 
 number_of_arms = 2
-number_of_epochs = 2
+number_of_epochs = 5
 complimentary = True
 shared_probabilities = True
 
@@ -470,8 +470,8 @@ genotype = lambda: NEATGenotype(inputs=input_size,
                                 outputs=output_size,
                                 prob_add_node=0.3,
                                 prob_add_conn=0.5,
-                                weight_range=(-0.2, 0.2),
-                                initial_weight_stdev=0.035,
+                                weight_range=(-0.1, 0.1),
+                                initial_weight_stdev=0.03,
                                 stdev_mutate_weight=0.02,
                                 types=['excitatory', 'inhibitory'],
                                 feedforward=False)
