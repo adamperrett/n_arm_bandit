@@ -9,7 +9,7 @@ from pympler.tracker import SummaryTracker
 import pylab
 from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
     SpynnakerExternalDevicePluginManager as ex
-import bandit
+# import bandit
 import sys, os
 import time
 import socket
