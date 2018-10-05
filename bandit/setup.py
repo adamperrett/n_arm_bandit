@@ -4,7 +4,7 @@ import os
 
 
 # Build a list of all project modules, as well as supplementary files
-main_package = "bandit"
+main_package = "spinn_bandit"
 extensions = {".aplx", ".boot", ".cfg", ".json", ".sql", ".template", ".xml",
               ".xsd"}
 main_package_dir = os.path.join(os.path.dirname(__file__), main_package)
@@ -26,7 +26,7 @@ for dirname, dirnames, filenames in os.walk(main_package_dir):
 # **HACK** spynnaker doesn't have __version__ set properly
 # therefore >= 3.0.0, < 4.0.0 doesn't work correctly
 setup(
-    name="bandit",
+    name="spinn_bandit",
     version="0.1.1",
     license="GNU GPLv3.0",
     packages=find_packages(),
