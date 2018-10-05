@@ -132,6 +132,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         # specified as additional parameters, forcing their product to be
         # duplicated in n_neurons seems pointless
 
+        # Pass in variables
         arms_list = []
         for arm in arms:
             arms_list.append(numpy.uint32(arm*0xffffffff))

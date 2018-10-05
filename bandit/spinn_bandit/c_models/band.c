@@ -197,7 +197,7 @@ static bool initialize(uint32_t *timer_period)
     log_info("r4 0x%x", arms_region[3]);
     log_info("r5 0x%x", arm_probabilities);
 //    log_info("r6 0x%x", *arm_probabilities);
-    log_info("r6 0x%x", &arm_probabilities);
+//    log_info("r6 0x%x", &arm_probabilities);
 
 
     log_info("Initialise: completed successfully");
