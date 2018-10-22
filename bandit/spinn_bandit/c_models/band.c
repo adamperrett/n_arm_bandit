@@ -206,26 +206,17 @@ static bool initialize(uint32_t *timer_period)
 }
 
 bool was_there_a_reward(){
-    int choice = mars_kiss64_seed(kiss_seed) % number_of_arms;
+    int choice = -1; //mars_kiss64_seed(kiss_seed) % number_of_arms;
 //    int choice = rand() % number_of_arms;
     int highest_value = 0;
-    if(arm_choices[0] >= highest_value){
-        if(arm_choices[0] == highest_value){
-            if (mars_kiss64_seed(kiss_seed) % 2 == 0){
-//            if (rand() % 2 == 0){
-                choice = 0;
-                highest_value = arm_choices[0];
-            }
-        }
-        else{
-            choice = 0;
-            highest_value = arm_choices[0];
-        }
+    if(arm_choices[0] > highest_value){
+        choice = 0;
+        highest_value = arm_choices[0];
     }
-    log_info("0 was spiked %d times, prob = %u", arm_choices[0], arm_probabilities[0]);
+//    log_info("0 was spiked %d times, prob = %u", arm_choices[0], arm_probabilities[0]);
     arm_choices[0] = 0;
     for(int i=1; i<number_of_arms; i=i+1){
-        if (arm_choices[i] >= highest_value){
+        if (arm_choices[i] >= highest_value && highest_value != 0){
             if(arm_choices[i] == highest_value){
                 if (mars_kiss64_seed(kiss_seed) % 2 == 0){
 //                if (rand() % 2 == 0){
@@ -238,26 +229,31 @@ bool was_there_a_reward(){
                 highest_value = arm_choices[i];
             }
         }
-        log_info("%d was spiked %d times, prob = %u", i, arm_choices[i], arm_probabilities[i]);
+//        log_info("%d was spiked %d times, prob = %u", i, arm_choices[i], arm_probabilities[i]);
         arm_choices[i] = 0;
     }
-    uint32_t probability_roll;
-//    double max = RAND_MAX;
-//    log_info("rand = %d, max = %d", rand_no, RAND_MAX);
-    probability_roll = mars_kiss64_seed(kiss_seed);
-//    probability_roll = rand();
-    log_info("prob_roll = %u", probability_roll);
-    log_info("roll was %u and prob was %u, max = %u %d", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
-    if(probability_roll < arm_probabilities[choice]){
-        log_info("reward given");
-        return true;
-    }
-    else if(probability_roll > arm_probabilities[choice]){
-        log_info("no cigar");
+    if (highest_value == 0){
         return false;
     }
     else{
-        log_info("shit broke");
+        uint32_t probability_roll;
+    //    double max = RAND_MAX;
+    //    log_info("rand = %d, max = %d", rand_no, RAND_MAX);
+        probability_roll = mars_kiss64_seed(kiss_seed);
+    //    probability_roll = rand();
+    //    log_info("prob_roll = %u", probability_roll);
+    //    log_info("roll was %u and prob was %u, max = %u %d", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
+        if(probability_roll < arm_probabilities[choice]){
+    //        log_info("reward given");
+            return true;
+        }
+        else if(probability_roll > arm_probabilities[choice]){
+    //        log_info("no cigar");
+            return false;
+        }
+        else{
+    //        log_info("shit broke");
+        }
     }
 }
 
@@ -265,7 +261,7 @@ void mc_packet_received_callback(uint key, uint payload)
 {
     uint32_t compare;
     compare = key & 0x7;
-    log_info("compare = %x", compare);
+//    log_info("compare = %x", compare);
     use(payload);
     if(compare == KEY_ARM_0){
         arm_choices[0]++;
@@ -292,7 +288,7 @@ void mc_packet_received_callback(uint key, uint payload)
         arm_choices[7]++;
     }
     else {
-        log_info("it broke arm selection %d", key);
+//        log_info("it broke arm selection %d", key);
     }
 }
 
@@ -339,7 +335,7 @@ void timer_callback(uint unused, uint dummy)
             // Reset ticks in frame and update frame
             tick_in_frame = 0;
 //            update_frame();
-            // Update recorded score every 10s
+            // Update recorded score every 1s
             if(score_change_count>=1000){
                 recording_record(0, &current_score, 4);
                 score_change_count=0;

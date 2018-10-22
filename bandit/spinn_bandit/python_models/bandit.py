@@ -105,7 +105,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
 
     BANDIT_REGION_BYTES = 24
     ARMS_REGION_BYTES = 80
-    MAX_SIM_DURATION = 1000 * 60 * 60 * 24  # 1 day
+    MAX_SIM_DURATION = 1000 * 60 * 60 * 24 * 7 # 1 week
 
     # parameters expected by PyNN
     default_parameters = {
