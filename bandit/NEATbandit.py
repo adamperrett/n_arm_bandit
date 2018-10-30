@@ -218,7 +218,8 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     #test the whole population and return scores
     global all_fails
     print "start"
-    print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, "- shared:", shared_probabilities, "- fails:", all_fails
+    print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
+        "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight
     gen_stats(pop)
     save_champion()
     # tracker.print_diff()
@@ -448,12 +449,13 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         for score in scores[trial]:
             print j, score
             j += 1
-        print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, "- shared:", shared_probabilities, "- fails:", all_fails
+        print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
+            "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight
         if shared_probabilities == True:
             print "probabilities = ", arms
         # End simulation
         p.end()
-        print "finished epoch:", trial+1, "/", number_of_epochs
+        print "\nfinished epoch:", trial+1, "/", number_of_epochs, "\n"
     for i in range(len(pop)):
         temp = 0
         for j in range(number_of_epochs):
@@ -462,7 +464,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         pop[i].stats = {'fitness': temp}
     print "finished all epochs"
     print "max probabilities were ", max_arms
-    min_score = 0
+    min_score = 0.
     for i in range(number_of_epochs):
         min_score -= 1 / max_arms[j]
     print "floor score is ", min_score
@@ -482,7 +484,8 @@ def gen_stats(list_pop):
 def save_champion():
     iteration = len(pop.champions) - 1
     if iteration >= 0:
-        with open('NEAT bandit champion {} - n{} -e{} - c{} - s{}.csv'.format(iteration, number_of_arms, number_of_epochs, complimentary, shared_probabilities), 'w') as file:
+        with open('NEAT bandit champion {} - a{} -e{} - c{} - s{} - n{}-{}.csv'.format(
+                iteration, number_of_arms, number_of_epochs, complimentary, shared_probabilities, noise_rate, noise_weight), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in pop.champions[iteration].conn_genes:
                 writer.writerow(pop.champions[iteration].conn_genes[i])
@@ -491,7 +494,8 @@ def save_champion():
             for i in pop.champions[iteration].stats:
                 writer.writerow(["fitness", pop.champions[iteration].stats[i]])
             # writer.writerow("\n")
-        with open('NEAT bandit champions n{} - c{} -e{} - s{}.csv'.format(number_of_arms, complimentary, number_of_epochs, shared_probabilities), 'a') as file:
+        with open('NEAT bandit champions a{} - c{} -e{} - s{} - n{}-{}.csv'.format(
+                number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight), 'a') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in pop.champions[iteration].conn_genes:
                 writer.writerow(pop.champions[iteration].conn_genes[i])
