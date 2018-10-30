@@ -12,4 +12,4 @@ SOURCE_DIRS += $(EXTRA_SRC_DIR)
 APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR)../model_binaries/)/
 CFLAGS += -I$(NEURAL_MODELLING_DIRS)/src
 
-include $(NEURAL_MODELLING_DIRS)/src/Makefile.common
+include $(SPINN_DIRS)/make/local.mk

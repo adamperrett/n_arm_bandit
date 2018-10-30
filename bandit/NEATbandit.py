@@ -9,7 +9,7 @@ from pympler.tracker import SummaryTracker
 import pylab
 from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
     SpynnakerExternalDevicePluginManager as ex
-# import bandit
+from bandit.spinn_bandit.python_models.bandit import Bandit
 import sys, os
 import time
 import socket
@@ -212,7 +212,7 @@ def connect_genes_to_fromlist(number_of_nodes, connections, nodes):
 
     return i2i_ex, i2h_ex, i2o_ex, h2i_ex, h2h_ex, h2o_ex, o2i_ex, o2h_ex, o2o_ex, i2i_in, i2h_in, i2o_in, h2i_in, h2h_in, h2o_in, o2i_in, o2h_in, o2o_in
 
-def test_pop(pop, tracker):
+def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     # gc.DEBUG_STATS
     # gc.DEBUG_COLLECTABLE
     #test the whole population and return scores
@@ -244,11 +244,12 @@ def test_pop(pop, tracker):
             bandit_pops = []
             receive_on_pops = []
             hidden_node_pops = []
-            hidden_count = 0
+            hidden_count = -1
             output_pops = []
             # Setup pyNN simulation
             p.setup(timestep=1.0)
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+            starting_pistol = p.Population(number_of_arms, p.SpikeSourceArray(spike_times=[0]))
             for i in range(len(pop)):
 
                 number_of_nodes = len(pop[i].node_genes)
@@ -271,7 +272,8 @@ def test_pop(pop, tracker):
                 random_seed = []
                 for j in range(4):
                     random_seed.append(np.random.randint(0xffff))
-                bandit_pops.append(p.Population(1, p.Bandit(arms, duration_of_trial, rand_seed=random_seed, label="bandit {}".format(i))))
+                band = Bandit(arms, reward_delay=duration_of_trial, rand_seed=random_seed, label="bandit {}".format(i))
+                bandit_pops.append(p.Population(band.neurons(), band))
                 # print "after creating bandit"
                 # tracker.print_diff()
 
@@ -286,13 +288,21 @@ def test_pop(pop, tracker):
                 # Create output population and remaining population
                 output_pops.append(p.Population(output_size, p.IF_cond_exp(), label="output_pop {}".format(i)))
                 p.Projection(output_pops[i], bandit_pops[i], p.AllToAllConnector())
+                if noise_rate != 0:
+                    output_noise = p.Population(output_size, p.SpikeSourcePoisson(rate=noise_rate))
+                    p.Projection(output_noise, output_pops[i], p.OneToOneConnector(),
+                                 p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                 # print "after creating output"
                 # tracker.print_diff()
 
                 if hidden_size != 0:
                     hidden_node_pops.append(p.Population(hidden_size, p.IF_cond_exp(), label="hidden_pop {}".format(i)))
                     hidden_count += 1
-                    # hidden_node_pops[hidden_count-1].record()
+                    if noise_rate != 0:
+                        hidden_noise = p.Population(hidden_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(hidden_noise, hidden_node_pops[hidden_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                    # hidden_node_pops[hidden_count].record()
                 # print "after creating hidden"
                 # tracker.print_diff()
                 # receive_on_pops[i].record()
@@ -300,41 +310,86 @@ def test_pop(pop, tracker):
 
                 # Create the remaining nodes from the connection matrix and add them up
                 if len(i2i_ex) != 0:
-                    p.Projection(receive_on_pops[i], receive_on_pops[i], p.FromListConnector(i2i_ex), receptor_type='excitatory')
+                    connection = p.FromListConnector(i2i_ex)
+                    p.Projection(receive_on_pops[i], receive_on_pops[i], connection,
+                                 receptor_type='excitatory')
+                    # p.Projection(starting_pistol, receive_on_pops[i], connection,
+                    #              receptor_type='excitatory')
                 if len(i2h_ex) != 0:
-                    p.Projection(receive_on_pops[i], hidden_node_pops[hidden_count-1], p.FromListConnector(i2h_ex), receptor_type='excitatory')
+                    connection = p.FromListConnector(i2h_ex)
+                    p.Projection(receive_on_pops[i], hidden_node_pops[hidden_count], connection,
+                                 receptor_type='excitatory')
+                    # p.Projection(starting_pistol, hidden_node_pops[hidden_count], connection,
+                    #              receptor_type='excitatory')
                 if len(i2o_ex) != 0:
-                    p.Projection(receive_on_pops[i], output_pops[i], p.FromListConnector(i2o_ex), receptor_type='excitatory')
+                    connection = p.FromListConnector(i2o_ex)
+                    p.Projection(receive_on_pops[i], output_pops[i], connection,
+                                 receptor_type='excitatory')
+                    # p.Projection(starting_pistol, output_pops[i], connection,
+                    #              receptor_type='excitatory')
                 if len(h2i_ex) != 0:
-                    p.Projection(hidden_node_pops[hidden_count-1], receive_on_pops[i], p.FromListConnector(h2i_ex), receptor_type='excitatory')
+                    p.Projection(hidden_node_pops[hidden_count], receive_on_pops[i], p.FromListConnector(h2i_ex),
+                                 receptor_type='excitatory')
                 if len(h2h_ex) != 0:
-                    p.Projection(hidden_node_pops[hidden_count-1], hidden_node_pops[hidden_count-1], p.FromListConnector(h2h_ex), receptor_type='excitatory')
+                    p.Projection(hidden_node_pops[hidden_count], hidden_node_pops[hidden_count], p.FromListConnector(h2h_ex),
+                                 receptor_type='excitatory')
                 if len(h2o_ex) != 0:
-                    p.Projection(hidden_node_pops[hidden_count-1], output_pops[i], p.FromListConnector(h2o_ex), receptor_type='excitatory')
+                    p.Projection(hidden_node_pops[hidden_count], output_pops[i], p.FromListConnector(h2o_ex),
+                                 receptor_type='excitatory')
                 if len(o2i_ex) != 0:
-                    p.Projection(output_pops[i], receive_on_pops[i], p.FromListConnector(o2i_ex), receptor_type='excitatory')
+                    p.Projection(output_pops[i], receive_on_pops[i], p.FromListConnector(o2i_ex),
+                                 receptor_type='excitatory')
                 if len(o2h_ex) != 0:
-                    p.Projection(output_pops[i], hidden_node_pops[hidden_count-1], p.FromListConnector(o2h_ex), receptor_type='excitatory')
+                    p.Projection(output_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(o2h_ex),
+                                 receptor_type='excitatory')
                 if len(o2o_ex) != 0:
-                    p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_ex), receptor_type='excitatory')
+                    p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_ex),
+                                 receptor_type='excitatory')
+                # if len(i2i_in) != 0:
+                #     connection = p.FromListConnector(i2i_in)
+                #     p.Projection(receive_on_pops[i], receive_on_pops[i], connection,
+                #                  receptor_type='inhibitory')
+                #     p.Projection(starting_pistol, receive_on_pops[i], connection,
+                #                  receptor_type='inhibitory')
+                # if len(i2h_in) != 0:
+                #     connection = p.FromListConnector(i2h_in)
+                #     p.Projection(receive_on_pops[i], hidden_node_pops[hidden_count], connection,
+                #                  receptor_type='inhibitory')
+                #     p.Projection(starting_pistol, hidden_node_pops[hidden_count], connection,
+                #                  receptor_type='inhibitory')
+                # if len(i2o_in) != 0:
+                #     connection = p.FromListConnector(i2o_in)
+                #     p.Projection(receive_on_pops[i], output_pops[i], connection,
+                #                  receptor_type='inhibitory')
+                #     p.Projection(starting_pistol, output_pops[i], connection,
+                #                  receptor_type='inhibitory')
                 if len(i2i_in) != 0:
-                    p.Projection(receive_on_pops[i], receive_on_pops[i], p.FromListConnector(i2i_in), receptor_type='inhibitory')
+                    p.Projection(receive_on_pops[i], receive_on_pops[i], p.FromListConnector(i2i_in),
+                                 receptor_type='inhibitory')
                 if len(i2h_in) != 0:
-                    p.Projection(receive_on_pops[i], hidden_node_pops[hidden_count-1], p.FromListConnector(i2h_in), receptor_type='inhibitory')
+                    p.Projection(receive_on_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(i2h_in),
+                                 receptor_type='inhibitory')
                 if len(i2o_in) != 0:
-                    p.Projection(receive_on_pops[i], output_pops[i], p.FromListConnector(i2o_in), receptor_type='inhibitory')
+                    p.Projection(receive_on_pops[i], output_pops[i], p.FromListConnector(i2o_in),
+                                 receptor_type='inhibitory')
                 if len(h2i_in) != 0:
-                    p.Projection(hidden_node_pops[hidden_count-1], receive_on_pops[i], p.FromListConnector(h2i_in), receptor_type='inhibitory')
+                    p.Projection(hidden_node_pops[hidden_count], receive_on_pops[i], p.FromListConnector(h2i_in),
+                                 receptor_type='inhibitory')
                 if len(h2h_in) != 0:
-                    p.Projection(hidden_node_pops[hidden_count-1], hidden_node_pops[hidden_count-1], p.FromListConnector(h2h_in), receptor_type='inhibitory')
+                    p.Projection(hidden_node_pops[hidden_count], hidden_node_pops[hidden_count], p.FromListConnector(h2h_in),
+                                 receptor_type='inhibitory')
                 if len(h2o_in) != 0:
-                    p.Projection(hidden_node_pops[hidden_count-1], output_pops[i], p.FromListConnector(h2o_in), receptor_type='inhibitory')
+                    p.Projection(hidden_node_pops[hidden_count], output_pops[i], p.FromListConnector(h2o_in),
+                                 receptor_type='inhibitory')
                 if len(o2i_in) != 0:
-                    p.Projection(output_pops[i], receive_on_pops[i], p.FromListConnector(o2i_in), receptor_type='inhibitory')
+                    p.Projection(output_pops[i], receive_on_pops[i], p.FromListConnector(o2i_in),
+                                 receptor_type='inhibitory')
                 if len(o2h_in) != 0:
-                    p.Projection(output_pops[i], hidden_node_pops[hidden_count-1], p.FromListConnector(o2h_in), receptor_type='inhibitory')
+                    p.Projection(output_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(o2h_in),
+                                 receptor_type='inhibitory')
                 if len(o2o_in) != 0:
-                    p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_in), receptor_type='inhibitory')
+                    p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_in),
+                                 receptor_type='inhibitory')
                 # print "after creating projections"
                 # tracker.print_diff()
 
@@ -357,9 +412,10 @@ def test_pop(pop, tracker):
 
 
         print "reached here 2"
-
+        new_scores = []
         for i in range(len(pop)):
-            scores.append(get_scores(bandit_pop=bandit_pops[i], simulator=simulator))
+            new_scores.append(get_scores(bandit_pop=bandit_pops[i], simulator=simulator))
+        scores.append(new_scores)
         #     if i == 0:
         #         pylab.figure()
         #     spikes_on = output_pops[i].getSpikes()
@@ -389,7 +445,7 @@ def test_pop(pop, tracker):
         # pylab.show()
 
         j = 0
-        for score in scores:
+        for score in scores[trial]:
             print j, score
             j += 1
         print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, "- shared:", shared_probabilities, "- fails:", all_fails
@@ -402,8 +458,17 @@ def test_pop(pop, tracker):
         temp = 0
         for j in range(number_of_epochs):
             # print np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]), (np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]) / number_of_trials) / max_arms[j]
-            temp += (np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]) / number_of_trials) / max_arms[j]
+            temp += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials) / max_arms[j]
         pop[i].stats = {'fitness': temp}
+    print "finished all epochs"
+    print "max probabilities were ", max_arms
+    min_score = 0
+    for i in range(number_of_epochs):
+        min_score -= 1 / max_arms[j]
+    print "floor score is ", min_score
+    for i in range(len(pop)):
+        print i, "|", pop[i].stats['fitness']
+    print "floor score is ", min_score
     print "finished all epochs"
     print "max probabilities were ", max_arms
     # gc.DEBUG_STATS
@@ -438,9 +503,11 @@ def save_champion():
 # gc.set_debug(gc.DEBUG_LEAK)
 
 number_of_arms = 2
-number_of_epochs = 5
+number_of_epochs = 3
 complimentary = True
 shared_probabilities = True
+noise_rate = 100
+noise_weight = 0.01
 
 # UDP port to read spikes from
 UDP_PORT1 = 17887
@@ -471,8 +538,8 @@ genotype = lambda: NEATGenotype(inputs=input_size,
                                 outputs=output_size,
                                 prob_add_node=0.3,
                                 prob_add_conn=0.5,
-                                weight_range=(-0.1, 0.1),
-                                initial_weight_stdev=0.03,
+                                weight_range=(0, 0.1),
+                                initial_weight_stdev=0.05,
                                 stdev_mutate_weight=0.02,
                                 types=['excitatory', 'inhibitory'],
                                 feedforward=False)

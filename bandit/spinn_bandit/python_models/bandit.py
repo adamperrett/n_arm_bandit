@@ -64,9 +64,9 @@ NUMPY_DATA_ELEMENT_TYPE = numpy.double
 # Bandit
 # ----------------------------------------------------------------------------
 # **HACK** for Projection to connect a synapse type is required
-class BanditSynapseType(object):
-    def get_synapse_id_by_target(self, target):
-        return 0
+# class BanditSynapseType(object):
+#     def get_synapse_id_by_target(self, target):
+#         return 0
 
 
 # ----------------------------------------------------------------------------
@@ -83,6 +83,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
 
     def get_connections_from_machine(self, transceiver, placement, edge, graph_mapper,
                                      routing_infos, synapse_information, machine_time_step):
+
         super(Bandit, self).get_connections_from_machine(transceiver, placement, edge,
                                                            graph_mapper, routing_infos,
                                                            synapse_information,
@@ -103,6 +104,9 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
     def clear_connection_cache(self):
         pass
 
+    def get_synapse_id_by_target(self, target):
+        return 0
+
     BANDIT_REGION_BYTES = 24
     ARMS_REGION_BYTES = 80
     MAX_SIM_DURATION = 1000 * 60 * 60 * 24 * 7 # 1 week
@@ -119,9 +123,9 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         'random_seed': [1,2,3,4]}
 
     # **HACK** for Projection to connect a synapse type is required
-    synapse_type = BanditSynapseType()
+    # synapse_type = BanditSynapseType()
 
-    def __init__(self, n_neurons, arms=default_parameters['arms'],
+    def __init__(self, arms=default_parameters['arms'],
                  reward_delay=default_parameters['reward_delay'],
                  constraints=default_parameters['constraints'],
                  label=default_parameters['label'],
@@ -165,6 +169,9 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         # PopulationSettableChangeRequiresMapping.__init__(self)
         # self.width = width
         # self.height = height
+
+    def neurons(self):
+        return self._n_neurons
 
     def get_maximum_delay_supported_in_ms(self, machine_time_step):
         # Bandit has no synapses so can simulate only one time step of delay

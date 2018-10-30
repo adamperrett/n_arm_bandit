@@ -102,14 +102,14 @@ uint32_t score_change_count=0;
 static inline void add_reward()
 {
   spin1_send_mc_packet(key | (SPECIAL_EVENT_REWARD), 0, NO_PAYLOAD);
-  log_debug("Got a reward");
+  io_printf(IO_BUF, "Got a reward\n");
   current_score++;
 }
 
 static inline void add_no_reward()
 {
   spin1_send_mc_packet(key | (SPECIAL_EVENT_NO_REWARD), 0, NO_PAYLOAD);
-  log_debug("No reward");
+  io_printf(IO_BUF, "No reward\n");
   current_score--;
 }
 
@@ -123,12 +123,12 @@ void resume_callback() {
 //  const uint32_t spike_key = key | (SPECIAL_EVENT_MAX + (i << 10) + (j << 2) + (bricked<<1) + colour_bit);
 //
 //  spin1_send_mc_packet(spike_key, 0, NO_PAYLOAD);
-//  log_debug("%d, %d, %u, %08x", i, j, col, spike_key);
+//  io_printf(IO_BUF, "%d, %d, %u, %08x\n", i, j, col, spike_key);
 //}
 
 static bool initialize(uint32_t *timer_period)
 {
-    log_info("Initialise breakout: started");
+    io_printf(IO_BUF, "Initialise bandit: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
     address_t address = data_specification_get_data_address();
@@ -152,14 +152,14 @@ static bool initialize(uint32_t *timer_period)
     {
       return false;
     }
-    log_info("simulation time = %u", simulation_ticks);
+    io_printf(IO_BUF, "simulation time = %u\n", simulation_ticks);
 
 
     // Read breakout region
     address_t breakout_region = data_specification_get_region(REGION_BREAKOUT, address);
     key = breakout_region[0];
-    log_info("\tKey=%08x", key);
-    log_info("\tTimer period=%d", *timer_period);
+    io_printf(IO_BUF, "\tKey=%08x\n", key);
+    io_printf(IO_BUF, "\tTimer period=%d\n", *timer_period);
 
     //get recording region
     address_t recording_address = data_specification_get_region(
@@ -183,24 +183,24 @@ static bool initialize(uint32_t *timer_period)
     arm_probabilities = (uint32_t *)&arms_region[6];
 //    double arm_probabilities[10] = {0}
 //    for (int i=1, i<number_of_arms, i=i+1){
-//        log_info("converting arm prob %d, stage ", temp_arm_probabilities[i] i)
+//        io_printf(IO_BUF, "converting arm prob %d, stage \n", temp_arm_probabilities[i] i)
 //        arm_probabilities[i] = (double)temp_arm_probabilities[i] / 1000.0
-//        log_info("probs after = %d", arm_probabilities)
+//        io_printf(IO_BUF, "probs after = %d\n", arm_probabilities)
 //    }
     validate_mars_kiss64_seed(rand_seed);
 //    srand(rand_seed);
     //TODO check this prints right, ybug read the address
-    log_info("r1 %d", (uint32_t *)arms_region[0]);
-    log_info("r2 %d", (uint32_t *)arms_region[1]);
-    log_info("rand3. %d", (uint32_t *)arms_region[2]);
-    log_info("rand3 0x%x", (uint32_t *)arms_region[3]);
-    log_info("r4 0x%x", arms_region[3]);
-    log_info("r5 0x%x", arm_probabilities);
-//    log_info("r6 0x%x", *arm_probabilities);
-//    log_info("r6 0x%x", &arm_probabilities);
+    io_printf(IO_BUF, "r1 %d\n", (uint32_t *)arms_region[0]);
+    io_printf(IO_BUF, "r2 %d\n", (uint32_t *)arms_region[1]);
+    io_printf(IO_BUF, "rand3. %d\n", (uint32_t *)arms_region[2]);
+    io_printf(IO_BUF, "rand3 0x%x\n", (uint32_t *)arms_region[3]);
+    io_printf(IO_BUF, "r4 0x%x\n", arms_region[3]);
+    io_printf(IO_BUF, "r5 0x%x\n", arm_probabilities);
+//    io_printf(IO_BUF, "r6 0x%x\n", *arm_probabilities);
+//    io_printf(IO_BUF, "r6 0x%x\n", &arm_probabilities);
 
 
-    log_info("Initialise: completed successfully");
+    io_printf(IO_BUF, "Initialise: completed successfully\n");
 
     return true;
 }
@@ -213,7 +213,7 @@ bool was_there_a_reward(){
         choice = 0;
         highest_value = arm_choices[0];
     }
-//    log_info("0 was spiked %d times, prob = %u", arm_choices[0], arm_probabilities[0]);
+    io_printf(IO_BUF, "0 was spiked %d times, prob = %u\n", arm_choices[0], arm_probabilities[0]);
     arm_choices[0] = 0;
     for(int i=1; i<number_of_arms; i=i+1){
         if (arm_choices[i] >= highest_value && highest_value != 0){
@@ -229,7 +229,7 @@ bool was_there_a_reward(){
                 highest_value = arm_choices[i];
             }
         }
-//        log_info("%d was spiked %d times, prob = %u", i, arm_choices[i], arm_probabilities[i]);
+        io_printf(IO_BUF, "%d was spiked %d times, prob = %u\n", i, arm_choices[i], arm_probabilities[i]);
         arm_choices[i] = 0;
     }
     if (highest_value == 0){
@@ -238,21 +238,21 @@ bool was_there_a_reward(){
     else{
         uint32_t probability_roll;
     //    double max = RAND_MAX;
-    //    log_info("rand = %d, max = %d", rand_no, RAND_MAX);
+    //    io_printf(IO_BUF, "rand = %d, max = %d\n", rand_no, RAND_MAX);
         probability_roll = mars_kiss64_seed(kiss_seed);
     //    probability_roll = rand();
-    //    log_info("prob_roll = %u", probability_roll);
-    //    log_info("roll was %u and prob was %u, max = %u %d", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
+    //    io_printf(IO_BUF, "prob_roll = %u\n", probability_roll);
+    //    io_printf(IO_BUF, "roll was %u and prob was %u, max = %u %d\n", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
         if(probability_roll < arm_probabilities[choice]){
-    //        log_info("reward given");
+    //        io_printf(IO_BUF, "reward given\n");
             return true;
         }
         else if(probability_roll > arm_probabilities[choice]){
-    //        log_info("no cigar");
+    //        io_printf(IO_BUF, "no cigar\n");
             return false;
         }
         else{
-    //        log_info("shit broke");
+    //        io_printf(IO_BUF, "shit broke\n");
         }
     }
 }
@@ -261,7 +261,7 @@ void mc_packet_received_callback(uint key, uint payload)
 {
     uint32_t compare;
     compare = key & 0x7;
-//    log_info("compare = %x", compare);
+//    io_printf(IO_BUF, "compare = %x\n", compare);
     use(payload);
     if(compare == KEY_ARM_0){
         arm_choices[0]++;
@@ -288,7 +288,7 @@ void mc_packet_received_callback(uint key, uint payload)
         arm_choices[7]++;
     }
     else {
-//        log_info("it broke arm selection %d", key);
+//        io_printf(IO_BUF, "it broke arm selection %d\n", key);
     }
 }
 
@@ -308,13 +308,14 @@ void timer_callback(uint unused, uint dummy)
         simulation_handle_pause_resume(resume_callback);
         //    spin1_callback_off(MC_PACKET_RECEIVED);
 
-        log_info("infinite_run %d; time %d",infinite_run, _time);
-        log_info("simulation_ticks %d",simulation_ticks);
-        //    log_info("key count Left %u", left_key_count);
-        //    log_info("key count Right %u", right_key_count);
+        io_printf(IO_BUF, "infinite_run %d; time %d\n",infinite_run, _time);
+        io_printf(IO_BUF, "simulation_ticks %d\n",simulation_ticks);
+        //    io_printf(IO_BUF, "key count Left %u\n", left_key_count);
+        //    io_printf(IO_BUF, "key count Right %u\n", right_key_count);
 
-        log_info("Exiting on timer.");
-        simulation_handle_pause_resume(NULL);
+        io_printf(IO_BUF, "Exiting on timer.\n");
+//        simulation_handle_pause_resume(NULL);
+        simulation_ready_to_read();
 
         _time -= 1;
         return;
@@ -342,8 +343,8 @@ void timer_callback(uint unused, uint dummy)
             }
         }
     }
-//    log_info("time %u", ticks);
-//    log_info("time %u", _time);
+//    io_printf(IO_BUF, "time %u\n", ticks);
+//    io_printf(IO_BUF, "time %u\n", _time);
 }
 //-------------------------------------------------------------------------------
 
@@ -361,7 +362,7 @@ void c_main(void)
   uint32_t timer_period;
   if (!initialize(&timer_period))
   {
-    log_error("Error in initialisation - exiting!");
+    io_printf(IO_BUF,"Error in initialisation - exiting!\n");
     rt_error(RTE_SWERR);
     return;
   }
@@ -369,11 +370,11 @@ void c_main(void)
   tick_in_frame = 0;
 
   // Set timer tick (in microseconds)
-  log_info("setting timer tick callback for %d microseconds",
+  io_printf(IO_BUF, "setting timer tick callback for %d microseconds\n",
               timer_period);
   spin1_set_timer_tick(timer_period);
 
-  log_info("simulation_ticks %d",simulation_ticks);
+  io_printf(IO_BUF, "simulation_ticks %d\n",simulation_ticks);
 
   // Register callback
   spin1_callback_on(TIMER_TICK, timer_callback, 2);
