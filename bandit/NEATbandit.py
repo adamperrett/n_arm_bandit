@@ -261,14 +261,14 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 # print "after creating connections"
                 # tracker.print_diff()
                 # [i2i, i2h, i2o, h2i, h2h, h2o, o2i, o2h, o2o] = cm_to_fromlist(number_of_nodes, networks[i].cm)
-                if i == 0 or shared_probabilities == False:
+                if (i == 0 or shared_probabilities == False) and try_except == 0:
                     arms = []
                     total = 1
                     for j in range(number_of_arms-1):
                         arms.append(random.uniform(0, total))
                         total -= arms[j]
                     arms.append(total)
-                    max_arms.append(max(arms))
+                    max_arms.append((format(max(arms), '.4f'), arms.index(max(arms))))
                 # Create bandit population
                 random_seed = []
                 for j in range(4):
@@ -408,7 +408,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 traceback.print_exc()
                 all_fails += 1
                 try_except += 1
-                print "failed to run on attempt", try_except, ". total fails:", all_fails, "\n"
+                print "\nfailed to run on attempt", try_except, ". total fails:", all_fails, "\n"
                 # p.end()
 
 
@@ -460,17 +460,17 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         temp = 0
         for j in range(number_of_epochs):
             # print np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]), (np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]) / number_of_trials) / max_arms[j]
-            temp += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials) / max_arms[j]
-        pop[i].stats = {'fitness': temp}
+            temp += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials) / max_arms[j][0]
+        pop[i].stats = {'fitness': format(temp, '.4f')}
     print "finished all epochs"
     print "max probabilities were ", max_arms
     min_score = 0.
     for i in range(number_of_epochs):
-        min_score -= 1 / max_arms[j]
-    print "floor score is ", min_score
+        min_score -= 1 / max_arms[j][0]
+    print "floor score is ", format(min_score, '.4f')
     for i in range(len(pop)):
-        print i, "|", pop[i].stats['fitness']
-    print "floor score is ", min_score
+        print i, "|", format(pop[i].stats['fitness'], '.4f')
+    print "floor score is ", format(min_score, '.4f')
     print "finished all epochs"
     print "max probabilities were ", max_arms
     # gc.DEBUG_STATS
