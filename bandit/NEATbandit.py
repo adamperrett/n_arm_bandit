@@ -250,7 +250,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
             # Setup pyNN simulation
             p.setup(timestep=1.0)
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-            starting_pistol = p.Population(number_of_arms, p.SpikeSourceArray(spike_times=[0]))
+            # starting_pistol = p.Population(number_of_arms, p.SpikeSourceArray(spike_times=[0]))
             for i in range(len(pop)):
 
                 number_of_nodes = len(pop[i].node_genes)
@@ -268,7 +268,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                         arms.append(random.uniform(0, total))
                         total -= arms[j]
                     arms.append(total)
-                    max_arms.append((format(max(arms), '.4f'), arms.index(max(arms))))
+                    max_arms.append((float(format(max(arms), '.5f')), arms.index(max(arms))))
                 # Create bandit population
                 random_seed = []
                 for j in range(4):
@@ -461,16 +461,16 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         for j in range(number_of_epochs):
             # print np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]), (np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]) / number_of_trials) / max_arms[j]
             temp += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials) / max_arms[j][0]
-        pop[i].stats = {'fitness': format(temp, '.4f')}
+        pop[i].stats = {'fitness': float(format(temp, '.5f'))}
     print "finished all epochs"
     print "max probabilities were ", max_arms
     min_score = 0.
     for i in range(number_of_epochs):
-        min_score -= 1 / max_arms[j][0]
-    print "floor score is ", format(min_score, '.4f')
+        min_score -= 1. / max_arms[j][0]
+    print "floor score is ", format(min_score, '.5f')
     for i in range(len(pop)):
-        print i, "|", format(pop[i].stats['fitness'], '.4f')
-    print "floor score is ", format(min_score, '.4f')
+        print i, "|", pop[i].stats['fitness']
+    print "floor score is ", format(min_score, '.5f')
     print "finished all epochs"
     print "max probabilities were ", max_arms
     # gc.DEBUG_STATS
