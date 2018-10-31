@@ -213,44 +213,36 @@ def connect_genes_to_fromlist(number_of_nodes, connections, nodes):
     return i2i_ex, i2h_ex, i2o_ex, h2i_ex, h2h_ex, h2o_ex, o2i_ex, o2h_ex, o2o_ex, i2i_in, i2h_in, i2o_in, h2i_in, h2h_in, h2o_in, o2i_in, o2h_in, o2o_in
 
 def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
-    # gc.DEBUG_STATS
-    # gc.DEBUG_COLLECTABLE
     #test the whole population and return scores
     global all_fails
     print "start"
     print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
-        "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight
+        "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight\
+        , "- grooming:", grooming
     gen_stats(pop)
     save_champion()
     # tracker.print_diff()
 
     #Acquire all connection matrices and node types
-    # networks = []
-    # for individual in pop:
-    #     networks.append(NeuralNetwork(individual))
-
-    receive_pop_size = input_size
-    # weight = 0.1
-    # [Connections_on, Connections_off] = subsample_connection(X_RESOLUTION, Y_RESOLUTION, x_factor, y_factor, weight,
-    #                                                          row_col_to_input_bandit)
 
     print len(pop)
     # tracker.print_diff()
     #create the SpiNN nets
     scores = []
+    spike_counts = []
     max_arms = []
     for trial in range(number_of_epochs):
         try_except = 0
         while try_except < try_attempts:
             bandit_pops = []
-            receive_on_pops = []
+            # receive_on_pops = []
             hidden_node_pops = []
             hidden_count = -1
+            hidden_marker = [0 for i in range(len(pop))]
             output_pops = []
             # Setup pyNN simulation
             p.setup(timestep=1.0)
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-            # starting_pistol = p.Population(number_of_arms, p.SpikeSourceArray(spike_times=[0]))
             for i in range(len(pop)):
 
                 number_of_nodes = len(pop[i].node_genes)
@@ -268,21 +260,27 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                         arms.append(random.uniform(0, total))
                         total -= arms[j]
                     arms.append(total)
+                    if trial % number_of_arms == 0:
+                        arms.sort(reverse=True)
+                    elif trial % number_of_arms == 1:
+                        arms.sort()
+                    else:
+                        np.random.shuffle(arms)
                     max_arms.append((float(format(max(arms), '.5f')), arms.index(max(arms))))
                 # Create bandit population
                 random_seed = []
                 for j in range(4):
                     random_seed.append(np.random.randint(0xffff))
                 band = Bandit(arms, reward_delay=duration_of_trial, rand_seed=random_seed, label="bandit {}".format(i))
-                bandit_pops.append(p.Population(band.neurons(), band))
+                bandit_pops.append(p.Population(band.neurons(), band, label="bandit {}".format(i)))
                 # print "after creating bandit"
                 # tracker.print_diff()
 
                 # Create input population and connect break out to it
-                receive_on_pops.append(p.Population(receive_pop_size, p.IF_cond_exp(), label="receive_pop {}".format(i)))
+                # receive_on_pops.append(p.Population(receive_pop_size, p.IF_cond_exp(), label="receive_pop {}".format(i)))
                 # print "after creating receive pop"
                 # tracker.print_diff()
-                p.Projection(bandit_pops[i], receive_on_pops[i], p.OneToOneConnector(), p.StaticSynapse(weight=0.1))
+                # p.Projection(bandit_pops[i], receive_on_pops[i], p.OneToOneConnector(), p.StaticSynapse(weight=0.1))
                 # print "after creating receive projection"
                 # tracker.print_diff()
 
@@ -299,37 +297,32 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 if hidden_size != 0:
                     hidden_node_pops.append(p.Population(hidden_size, p.IF_cond_exp(), label="hidden_pop {}".format(i)))
                     hidden_count += 1
+                    hidden_marker[i] = 1
                     if noise_rate != 0:
                         hidden_noise = p.Population(hidden_size, p.SpikeSourcePoisson(rate=noise_rate))
                         p.Projection(hidden_noise, hidden_node_pops[hidden_count], p.OneToOneConnector(),
                                      p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    # hidden_node_pops[hidden_count].record()
+                    hidden_node_pops[hidden_count].record('spikes')
                 # print "after creating hidden"
                 # tracker.print_diff()
-                # receive_on_pops[i].record()
-                # output_pops[i].record()
+                # receive_on_pops[i].record('spikes')
+                output_pops[i].record('spikes')
 
                 # Create the remaining nodes from the connection matrix and add them up
                 if len(i2i_ex) != 0:
                     connection = p.FromListConnector(i2i_ex)
-                    p.Projection(receive_on_pops[i], receive_on_pops[i], connection,
+                    p.Projection(bandit_pops[i], bandit_pops[i], connection,
                                  receptor_type='excitatory')
-                    # p.Projection(starting_pistol, receive_on_pops[i], connection,
-                    #              receptor_type='excitatory')
                 if len(i2h_ex) != 0:
                     connection = p.FromListConnector(i2h_ex)
-                    p.Projection(receive_on_pops[i], hidden_node_pops[hidden_count], connection,
+                    p.Projection(bandit_pops[i], hidden_node_pops[hidden_count], connection,
                                  receptor_type='excitatory')
-                    # p.Projection(starting_pistol, hidden_node_pops[hidden_count], connection,
-                    #              receptor_type='excitatory')
                 if len(i2o_ex) != 0:
                     connection = p.FromListConnector(i2o_ex)
-                    p.Projection(receive_on_pops[i], output_pops[i], connection,
+                    p.Projection(bandit_pops[i], output_pops[i], connection,
                                  receptor_type='excitatory')
-                    # p.Projection(starting_pistol, output_pops[i], connection,
-                    #              receptor_type='excitatory')
                 if len(h2i_ex) != 0:
-                    p.Projection(hidden_node_pops[hidden_count], receive_on_pops[i], p.FromListConnector(h2i_ex),
+                    p.Projection(hidden_node_pops[hidden_count], bandit_pops[i], p.FromListConnector(h2i_ex),
                                  receptor_type='excitatory')
                 if len(h2h_ex) != 0:
                     p.Projection(hidden_node_pops[hidden_count], hidden_node_pops[hidden_count], p.FromListConnector(h2h_ex),
@@ -338,7 +331,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                     p.Projection(hidden_node_pops[hidden_count], output_pops[i], p.FromListConnector(h2o_ex),
                                  receptor_type='excitatory')
                 if len(o2i_ex) != 0:
-                    p.Projection(output_pops[i], receive_on_pops[i], p.FromListConnector(o2i_ex),
+                    p.Projection(output_pops[i], bandit_pops[i], p.FromListConnector(o2i_ex),
                                  receptor_type='excitatory')
                 if len(o2h_ex) != 0:
                     p.Projection(output_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(o2h_ex),
@@ -346,35 +339,17 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 if len(o2o_ex) != 0:
                     p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_ex),
                                  receptor_type='excitatory')
-                # if len(i2i_in) != 0:
-                #     connection = p.FromListConnector(i2i_in)
-                #     p.Projection(receive_on_pops[i], receive_on_pops[i], connection,
-                #                  receptor_type='inhibitory')
-                #     p.Projection(starting_pistol, receive_on_pops[i], connection,
-                #                  receptor_type='inhibitory')
-                # if len(i2h_in) != 0:
-                #     connection = p.FromListConnector(i2h_in)
-                #     p.Projection(receive_on_pops[i], hidden_node_pops[hidden_count], connection,
-                #                  receptor_type='inhibitory')
-                #     p.Projection(starting_pistol, hidden_node_pops[hidden_count], connection,
-                #                  receptor_type='inhibitory')
-                # if len(i2o_in) != 0:
-                #     connection = p.FromListConnector(i2o_in)
-                #     p.Projection(receive_on_pops[i], output_pops[i], connection,
-                #                  receptor_type='inhibitory')
-                #     p.Projection(starting_pistol, output_pops[i], connection,
-                #                  receptor_type='inhibitory')
                 if len(i2i_in) != 0:
-                    p.Projection(receive_on_pops[i], receive_on_pops[i], p.FromListConnector(i2i_in),
+                    p.Projection(bandit_pops[i], bandit_pops[i], p.FromListConnector(i2i_in),
                                  receptor_type='inhibitory')
                 if len(i2h_in) != 0:
-                    p.Projection(receive_on_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(i2h_in),
+                    p.Projection(bandit_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(i2h_in),
                                  receptor_type='inhibitory')
                 if len(i2o_in) != 0:
-                    p.Projection(receive_on_pops[i], output_pops[i], p.FromListConnector(i2o_in),
+                    p.Projection(bandit_pops[i], output_pops[i], p.FromListConnector(i2o_in),
                                  receptor_type='inhibitory')
                 if len(h2i_in) != 0:
-                    p.Projection(hidden_node_pops[hidden_count], receive_on_pops[i], p.FromListConnector(h2i_in),
+                    p.Projection(hidden_node_pops[hidden_count], bandit_pops[i], p.FromListConnector(h2i_in),
                                  receptor_type='inhibitory')
                 if len(h2h_in) != 0:
                     p.Projection(hidden_node_pops[hidden_count], hidden_node_pops[hidden_count], p.FromListConnector(h2h_in),
@@ -383,7 +358,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                     p.Projection(hidden_node_pops[hidden_count], output_pops[i], p.FromListConnector(h2o_in),
                                  receptor_type='inhibitory')
                 if len(o2i_in) != 0:
-                    p.Projection(output_pops[i], receive_on_pops[i], p.FromListConnector(o2i_in),
+                    p.Projection(output_pops[i], bandit_pops[i], p.FromListConnector(o2i_in),
                                  receptor_type='inhibitory')
                 if len(o2h_in) != 0:
                     p.Projection(output_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(o2h_in),
@@ -411,6 +386,23 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 print "\nfailed to run on attempt", try_except, ". total fails:", all_fails, "\n"
                 # p.end()
 
+
+        hidden_count = 0
+        new_spike_counts = []
+        for i in range(len(pop)):
+            spike_count = 0
+            spikes = output_pops[i].get_data('spikes').segments[0].spiketrains
+            for neuron in spikes:
+                for spike in neuron:
+                    spike_count += 1
+            if hidden_marker[i] == 1:
+                spikes = hidden_node_pops[hidden_count].get_data('spikes').segments[0].spiketrains
+                hidden_count += 1
+                for neuron in spikes:
+                    for spike in neuron:
+                        spike_count += 1
+            new_spike_counts.append(spike_count)
+        spike_counts.append(new_spike_counts)
 
         print "reached here 2"
         new_scores = []
@@ -447,32 +439,59 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
 
         j = 0
         for score in scores[trial]:
-            print j, score
+            print j, "s:", new_spike_counts[j], score
             j += 1
         print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
-            "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight
+            "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight\
+            , "- grooming:", grooming
         if shared_probabilities == True:
             print "probabilities = ", arms
         # End simulation
         p.end()
         print "\nfinished epoch:", trial+1, "/", number_of_epochs, "\n"
+    pop_scores = []
+    pop_spikes = []
+    min_score = 10000000
     for i in range(len(pop)):
-        temp = 0
+        temp_score = 0
+        temp_spike = 0
         for j in range(number_of_epochs):
             # print np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]), (np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]) / number_of_trials) / max_arms[j]
-            temp += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials) / max_arms[j][0]
-        pop[i].stats = {'fitness': float(format(temp, '.5f'))}
-    print "finished all epochs"
-    print "max probabilities were ", max_arms
-    min_score = 0.
-    for i in range(number_of_epochs):
-        min_score -= 1. / max_arms[j][0]
-    print "floor score is ", format(min_score, '.5f')
+            temp_score += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials) / max_arms[j][0]
+            temp_spike += spike_counts[j][i]
+        if temp_score < min_score:
+            min_score = temp_score
+        pop_scores.append([temp_score, i])
+        pop_spikes.append([temp_spike, i])
+    pop_scores.sort()
+    pop_spikes.sort(reverse=True)
+    combined_fitness = [0 for i in range(len(pop))]
+    failed_score = 0
+    failed_spikes = 0
     for i in range(len(pop)):
-        print i, "|", pop[i].stats['fitness']
-    print "floor score is ", format(min_score, '.5f')
+        if grooming:
+            if pop_scores[i][0] != min_score:
+                failed_score += 1
+            combined_fitness[pop_scores[i][1]] += failed_score
+            if pop_spikes[i][0] < spike_cap:
+                if pop_spikes[i][0] > number_of_trials:
+                    failed_spikes += 1
+                combined_fitness[pop_spikes[i][1]] += failed_spikes
+        else:
+            combined_fitness[pop_scores[i][1]] += i
+            combined_fitness[pop_spikes[i][1]] += i
+    pop_scores.sort(key=lambda x: x[1])
+    pop_spikes.sort(key=lambda x: x[1])
+    for i in range(len(pop)):
+        pop[i].stats = {'fitness': combined_fitness[i], 'score': float(format(pop_scores[i][0], '.3f')), 'spikes': pop_spikes[i][0]}
     print "finished all epochs"
     print "max probabilities were ", max_arms
+    print "floor score is ", format(min_score, '.5f')
+    # for i in range(len(pop)):
+    #     print i, "|", pop[i].stats['fitness']
+    # print "floor score is ", format(min_score, '.5f')
+    # print "finished all epochs"
+    # print "max probabilities were ", max_arms
     # gc.DEBUG_STATS
     # gc.DEBUG_COLLECTABLE
 
@@ -484,8 +503,8 @@ def gen_stats(list_pop):
 def save_champion():
     iteration = len(pop.champions) - 1
     if iteration >= 0:
-        with open('NEAT bandit champion {} - a{} -e{} - c{} - s{} - n{}-{}.csv'.format(
-                iteration, number_of_arms, number_of_epochs, complimentary, shared_probabilities, noise_rate, noise_weight), 'w') as file:
+        with open('NEAT bandit champion {} - a{} -e{} - c{} - s{} - n{}-{} - g{}.csv'.format(
+                iteration, number_of_arms, number_of_epochs, complimentary, shared_probabilities, noise_rate, noise_weight, grooming), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in pop.champions[iteration].conn_genes:
                 writer.writerow(pop.champions[iteration].conn_genes[i])
@@ -494,8 +513,8 @@ def save_champion():
             for i in pop.champions[iteration].stats:
                 writer.writerow(["fitness", pop.champions[iteration].stats[i]])
             # writer.writerow("\n")
-        with open('NEAT bandit champions a{} - c{} -e{} - s{} - n{}-{}.csv'.format(
-                number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight), 'a') as file:
+        with open('NEAT bandit champions a{} - c{} -e{} - s{} - n{}-{} - g.csv'.format(
+                number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight, grooming), 'a') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in pop.champions[iteration].conn_genes:
                 writer.writerow(pop.champions[iteration].conn_genes[i])
@@ -510,6 +529,8 @@ number_of_arms = 2
 number_of_epochs = 3
 complimentary = True
 shared_probabilities = True
+grooming = True
+spike_cap = 20000
 noise_rate = 100
 noise_weight = 0.01
 
