@@ -77,7 +77,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
                AbstractProvidesOutgoingPartitionConstraints,
                AbstractAcceptsIncomingSynapses,
                AbstractNeuronRecordable,
-               SimplePopulationSettable,
+               SimplePopulationSettable
                # AbstractBinaryUsesSimulationRun
                ):
 
@@ -135,6 +135,8 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         # **NOTE** n_neurons currently ignored - width and height will be
         # specified as additional parameters, forcing their product to be
         # duplicated in n_neurons seems pointless
+
+        self._label = label
 
         # Pass in variables
         arms_list = []
@@ -199,7 +201,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
     def create_machine_vertex(self, vertex_slice, resources_required,
                               label=None, constraints=None):
         # Return suitable machine vertex
-        return BanditMachineVertex(resources_required, constraints, label)
+        return BanditMachineVertex(resources_required, constraints, self._label)
 
     @property
     @overrides(ApplicationVertex.n_atoms)

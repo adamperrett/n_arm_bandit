@@ -238,7 +238,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
             # receive_on_pops = []
             hidden_node_pops = []
             hidden_count = -1
-            hidden_marker = [0 for i in range(len(pop))]
+            hidden_marker = []
             output_pops = []
             # Setup pyNN simulation
             p.setup(timestep=1.0)
@@ -297,7 +297,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 if hidden_size != 0:
                     hidden_node_pops.append(p.Population(hidden_size, p.IF_cond_exp(), label="hidden_pop {}".format(i)))
                     hidden_count += 1
-                    hidden_marker[i] = 1
+                    hidden_marker.append(i)
                     if noise_rate != 0:
                         hidden_noise = p.Population(hidden_size, p.SpikeSourcePoisson(rate=noise_rate))
                         p.Projection(hidden_noise, hidden_node_pops[hidden_count], p.OneToOneConnector(),
@@ -395,7 +395,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
             for neuron in spikes:
                 for spike in neuron:
                     spike_count += 1
-            if hidden_marker[i] == 1:
+            if i in hidden_marker:
                 spikes = hidden_node_pops[hidden_count].get_data('spikes').segments[0].spiketrains
                 hidden_count += 1
                 for neuron in spikes:
@@ -466,17 +466,31 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     pop_scores.sort()
     pop_spikes.sort(reverse=True)
     combined_fitness = [0 for i in range(len(pop))]
-    failed_score = 0
+    # failed_score = 0
     failed_spikes = 0
     for i in range(len(pop)):
-        if grooming:
+        if grooming == 'both':
             if pop_scores[i][0] != min_score:
-                failed_score += 1
-            combined_fitness[pop_scores[i][1]] += failed_score
+                # failed_score += 1
+                combined_fitness[pop_scores[i][1]] += i#failed_score
             if pop_spikes[i][0] < spike_cap:
                 if pop_spikes[i][0] > number_of_trials:
                     failed_spikes += 1
                 combined_fitness[pop_spikes[i][1]] += failed_spikes
+        elif grooming == 'cap':
+            if pop_spikes[i][0] > spike_cap:
+                combined_fitness[pop_spikes[i][1]] -= 10000
+            combined_fitness[pop_scores[i][1]] += i
+        elif grooming == 'strict':
+            if pop_spikes[i][0] > spike_cap:
+                combined_fitness[pop_spikes[i][1]] -= 10000
+                combined_fitness[pop_scores[i][1]] += i
+            if pop_scores[i][0] == min_score:
+                combined_fitness[pop_scores[i][1]] -=10000
+                combined_fitness[pop_spikes[i][1]] += i
+            else:
+                combined_fitness[pop_scores[i][1]] += i
+                combined_fitness[pop_spikes[i][1]] += i
         else:
             combined_fitness[pop_scores[i][1]] += i
             combined_fitness[pop_spikes[i][1]] += i
@@ -529,7 +543,7 @@ number_of_arms = 2
 number_of_epochs = 3
 complimentary = True
 shared_probabilities = True
-grooming = True
+grooming = 'cap'
 spike_cap = 20000
 noise_rate = 100
 noise_weight = 0.01

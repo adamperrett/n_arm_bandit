@@ -213,7 +213,7 @@ bool was_there_a_reward(){
         choice = 0;
         highest_value = arm_choices[0];
     }
-    io_printf(IO_BUF, "0 was spiked %d times, prob = %u\n", arm_choices[0], arm_probabilities[0]);
+//    io_printf(IO_BUF, "0 was spiked %d times, prob = %u\n", arm_choices[0], arm_probabilities[0]);
     arm_choices[0] = 0;
     for(int i=1; i<number_of_arms; i=i+1){
         if (arm_choices[i] >= highest_value && highest_value != 0){
@@ -229,7 +229,7 @@ bool was_there_a_reward(){
                 highest_value = arm_choices[i];
             }
         }
-        io_printf(IO_BUF, "%d was spiked %d times, prob = %u\n", i, arm_choices[i], arm_probabilities[i]);
+//        io_printf(IO_BUF, "%d was spiked %d times, prob = %u\n", i, arm_choices[i], arm_probabilities[i]);
         arm_choices[i] = 0;
     }
     if (highest_value == 0){
