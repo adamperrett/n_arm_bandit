@@ -1,6 +1,8 @@
 import spynnaker8 as p
 from pyNN.utility.plotting import Figure, Panel
 import matplotlib.pyplot as plt
+from bandit.spinn_bandit.python_models.bandit import Bandit
+import numpy as np
 
 def test_levels(rates=(150, 125, 100), weights=(0.01, 0.015)):
     counter = 0
@@ -16,7 +18,7 @@ def test_levels(rates=(150, 125, 100), weights=(0.01, 0.015)):
             receive_pop[counter].record(['spikes', 'v'])#["spikes"])
 
             # Connect key spike injector to input population
-            spike_input.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=rate)))#, label="input_connect{}-{}".format(rate, weight)))
+            spike_input.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=rate), label="input_connect{}-{}".format(rate, weight)))
             p.Projection(
                 spike_input[counter], receive_pop[counter], p.OneToOneConnector(), p.StaticSynapse(weight=weight))
 
@@ -46,4 +48,56 @@ def test_levels(rates=(150, 125, 100), weights=(0.01, 0.015)):
     # End simulation
     p.end()
 
-test_levels()
+def test_packets(rate=100, weight=0.01, probability=0.7, pop_size=2, count=200, with_bandit=False):
+    counter = 0
+    receive_pop = []
+    output_pop = []
+    spike_input = []
+    bandit_pops = []
+    p.setup(timestep=1, min_delay=1, max_delay=127)
+    p.set_number_of_neurons_per_core(p.IF_cond_exp, 10)
+    for i in range(count):
+        # pop_size = 2
+
+        receive_pop.append(p.Population(pop_size, p.IF_cond_exp(), label="receive_pop{}".format(i)))
+        output_pop.append(p.Population(2, p.IF_cond_exp(), label="output_pop{}".format(i)))
+        p.Projection(receive_pop[counter], output_pop[counter], p.AllToAllConnector(), p.StaticSynapse(weight=0.1))
+        seed = np.random.randint(0,1000)
+        print "seed:", seed
+        np.random.seed(seed)
+        p.Projection(receive_pop[counter], receive_pop[counter], p.FixedProbabilityConnector(probability), p.StaticSynapse(weight=0.1))
+        p.Projection(output_pop[counter], output_pop[counter], p.FixedProbabilityConnector(probability), p.StaticSynapse(weight=0.1))
+
+        if with_bandit:
+            random_seed = []
+            for j in range(4):
+                random_seed.append(np.random.randint(0xffff))
+            band = Bandit([0.9, 0.1], reward_delay=200, rand_seed=random_seed, label="bandit {}".format(i))
+            bandit_pops.append(p.Population(band.neurons(), band, label="bandit {}".format(i)))
+            p.Projection(bandit_pops[counter], receive_pop[counter], p.OneToOneConnector(), p.StaticSynapse(weight=0.1))
+            p.Projection(output_pop[counter], bandit_pops[counter], p.OneToOneConnector(), p.StaticSynapse(weight=weight))
+
+        receive_pop[counter].record(['spikes'])#, 'v'])#["spikes"])
+
+        # Connect key spike injector to input population
+        spike_input.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=rate), label="input_connect{}-{}".format(rate, weight)))
+        p.Projection(
+            spike_input[counter], receive_pop[counter], p.OneToOneConnector(), p.StaticSynapse(weight=weight))
+
+        runtime = 21000
+
+        counter += 1
+
+    p.run(runtime)
+
+    spikes = []
+    for i in range(counter):
+        spikes.append(receive_pop[i].get_data('spikes').segments[0].spiketrains)
+
+    # End simulation
+    p.end()
+    print "ended"
+
+# test_levels()
+for prob in range(0,1,0.1):
+    test_packets(probability=prob)

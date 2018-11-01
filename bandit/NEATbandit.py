@@ -218,10 +218,12 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     print "start"
     print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
         "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight\
-        , "- grooming:", grooming
+        , "- grooming:", grooming, "- reward:", reward_based
     gen_stats(pop)
     save_champion()
     # tracker.print_diff()
+
+    time.sleep(5)
 
     #Acquire all connection matrices and node types
 
@@ -255,23 +257,26 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 # [i2i, i2h, i2o, h2i, h2h, h2o, o2i, o2h, o2o] = cm_to_fromlist(number_of_nodes, networks[i].cm)
                 if (i == 0 or shared_probabilities == False) and try_except == 0:
                     arms = []
-                    total = 1
-                    for j in range(number_of_arms-1):
-                        arms.append(random.uniform(0, total))
-                        total -= arms[j]
-                    arms.append(total)
-                    if trial % number_of_arms == 0:
-                        arms.sort(reverse=True)
-                    elif trial % number_of_arms == 1:
-                        arms.sort()
+                    if fixed_arms:
+                        arms = fixed_arms[trial]
                     else:
-                        np.random.shuffle(arms)
+                        total = 1
+                        for j in range(number_of_arms-1):
+                            arms.append(random.uniform(0, total))
+                            total -= arms[j]
+                        arms.append(total)
+                        if trial % number_of_arms == 0:
+                            arms.sort(reverse=True)
+                        elif trial % number_of_arms == 1:
+                            arms.sort()
+                        else:
+                            np.random.shuffle(arms)
                     max_arms.append((float(format(max(arms), '.5f')), arms.index(max(arms))))
                 # Create bandit population
                 random_seed = []
                 for j in range(4):
                     random_seed.append(np.random.randint(0xffff))
-                band = Bandit(arms, reward_delay=duration_of_trial, rand_seed=random_seed, label="bandit {}".format(i))
+                band = Bandit(arms, reward_based=reward_based, reward_delay=duration_of_trial, rand_seed=random_seed, label="bandit {}".format(i))
                 bandit_pops.append(p.Population(band.neurons(), band, label="bandit {}".format(i)))
                 # print "after creating bandit"
                 # tracker.print_diff()
@@ -286,9 +291,9 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
 
                 # Create output population and remaining population
                 output_pops.append(p.Population(output_size, p.IF_cond_exp(), label="output_pop {}".format(i)))
-                p.Projection(output_pops[i], bandit_pops[i], p.AllToAllConnector())
+                p.Projection(output_pops[i], bandit_pops[i], p.OneToOneConnector())
                 if noise_rate != 0:
-                    output_noise = p.Population(output_size, p.SpikeSourcePoisson(rate=noise_rate))
+                    output_noise = p.Population(output_size, p.SpikeSourcePoisson(rate=noise_rate), label="output noise")
                     p.Projection(output_noise, output_pops[i], p.OneToOneConnector(),
                                  p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                 # print "after creating output"
@@ -299,7 +304,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                     hidden_count += 1
                     hidden_marker.append(i)
                     if noise_rate != 0:
-                        hidden_noise = p.Population(hidden_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        hidden_noise = p.Population(hidden_size, p.SpikeSourcePoisson(rate=noise_rate), label="hidden noise")
                         p.Projection(hidden_noise, hidden_node_pops[hidden_count], p.OneToOneConnector(),
                                      p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                     hidden_node_pops[hidden_count].record('spikes')
@@ -443,7 +448,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
             j += 1
         print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
             "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight\
-            , "- grooming:", grooming
+            , "- grooming:", grooming, "- reward:", reward_based
         if shared_probabilities == True:
             print "probabilities = ", arms
         # End simulation
@@ -457,7 +462,10 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         temp_spike = 0
         for j in range(number_of_epochs):
             # print np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]), (np.double(scores[i+(len(pop)*j)][len(scores[i+(len(pop)*j)]) - 1][0]) / number_of_trials) / max_arms[j]
-            temp_score += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials) / max_arms[j][0]
+            if reward_based == 0:
+                temp_score += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials)
+            else:
+                temp_score += (np.double(scores[j][i][len(scores[j][i]) - 1][0]) / number_of_trials) / max_arms[j][0]
             temp_spike += spike_counts[j][i]
         if temp_score < min_score:
             min_score = temp_score
@@ -480,7 +488,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         elif grooming == 'cap':
             if pop_spikes[i][0] > spike_cap:
                 combined_fitness[pop_spikes[i][1]] -= 10000
-            combined_fitness[pop_scores[i][1]] += i
+            combined_fitness[pop_scores[i][1]] += pop_scores[i][0]
         elif grooming == 'strict':
             if pop_spikes[i][0] > spike_cap:
                 combined_fitness[pop_spikes[i][1]] -= 10000
@@ -517,8 +525,9 @@ def gen_stats(list_pop):
 def save_champion():
     iteration = len(pop.champions) - 1
     if iteration >= 0:
-        with open('NEAT bandit champion {} - a{} -e{} - c{} - s{} - n{}-{} - g{}.csv'.format(
-                iteration, number_of_arms, number_of_epochs, complimentary, shared_probabilities, noise_rate, noise_weight, grooming), 'w') as file:
+        with open('NEAT bandit champion {} - a{} -e{} - c{} - s{} - n{}-{} - g{} - r{}.csv'.format(
+                iteration, number_of_arms, number_of_epochs, complimentary, shared_probabilities, noise_rate,
+                noise_weight, grooming, reward_based), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in pop.champions[iteration].conn_genes:
                 writer.writerow(pop.champions[iteration].conn_genes[i])
@@ -527,8 +536,9 @@ def save_champion():
             for i in pop.champions[iteration].stats:
                 writer.writerow(["fitness", pop.champions[iteration].stats[i]])
             # writer.writerow("\n")
-        with open('NEAT bandit champions a{} - c{} -e{} - s{} - n{}-{} - g.csv'.format(
-                number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight, grooming), 'a') as file:
+        with open('NEAT bandit champions a{} - c{} -e{} - s{} - n{}-{} - g{} - r{}.csv'.format(
+                number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight,
+                grooming, reward_based), 'a') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in pop.champions[iteration].conn_genes:
                 writer.writerow(pop.champions[iteration].conn_genes[i])
@@ -539,13 +549,16 @@ def save_champion():
 
 # gc.set_debug(gc.DEBUG_LEAK)
 
+
 number_of_arms = 2
-number_of_epochs = 3
+number_of_epochs = 2
+fixed_arms = [[0.8, 0.2], [0.2, 0.8]]
 complimentary = True
 shared_probabilities = True
 grooming = 'cap'
-spike_cap = 20000
-noise_rate = 100
+reward_based = 0
+spike_cap = 10000
+noise_rate = 0
 noise_weight = 0.01
 
 # UDP port to read spikes from

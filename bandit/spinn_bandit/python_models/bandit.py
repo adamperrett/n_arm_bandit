@@ -116,6 +116,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         'reward_delay': 200.0,
         'constraints': None,
         'rate': 1.0,
+        'reward_based': 1,
         'label': "Bandit",
         'incoming_spike_buffer_size': None,
         'duration': MAX_SIM_DURATION,
@@ -127,6 +128,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
 
     def __init__(self, arms=default_parameters['arms'],
                  reward_delay=default_parameters['reward_delay'],
+                 reward_based=default_parameters['reward_based'],
                  constraints=default_parameters['constraints'],
                  label=default_parameters['label'],
                  incoming_spike_buffer_size=default_parameters['incoming_spike_buffer_size'],
@@ -149,6 +151,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         self._rand_seed = rand_seed
 
         self._reward_delay = reward_delay
+        self._reward_based = reward_based
 
         # used to define size of recording region
         self._recording_size = int((simulation_duration_ms / 1000.) * 4)
@@ -282,6 +285,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         spec.write_value(self._rand_seed[1], data_type=DataType.UINT32)
         spec.write_value(self._rand_seed[2], data_type=DataType.UINT32)
         spec.write_value(self._rand_seed[3], data_type=DataType.UINT32)
+        spec.write_value(self._reward_based, data_type=DataType.UINT32)
         # Write the data - Arrays must be 32-bit values, so convert
         data = numpy.array(self._arms, dtype=numpy.uint32)
         spec.write_array(data.view(numpy.uint32))

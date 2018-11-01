@@ -83,6 +83,10 @@ int rand_seed;
 int arm_choices[8] = {0};
 
 int32_t current_score = 0;
+int32_t best_arm = -1;
+bool chose_well = false;
+int32_t reward_based = 1;
+int32_t correct_pulls = 0;
 
 uint32_t reward_delay;
 
@@ -180,7 +184,8 @@ static bool initialize(uint32_t *timer_period)
     kiss_seed[1] = arms_region[3];
     kiss_seed[2] = arms_region[4];
     kiss_seed[3] = arms_region[5];
-    arm_probabilities = (uint32_t *)&arms_region[6];
+    reward_based = arms_region[6];
+    arm_probabilities = (uint32_t *)&arms_region[7];
 //    double arm_probabilities[10] = {0}
 //    for (int i=1, i<number_of_arms, i=i+1){
 //        io_printf(IO_BUF, "converting arm prob %d, stage \n", temp_arm_probabilities[i] i)
@@ -196,9 +201,19 @@ static bool initialize(uint32_t *timer_period)
     io_printf(IO_BUF, "rand3 0x%x\n", (uint32_t *)arms_region[3]);
     io_printf(IO_BUF, "r4 0x%x\n", arms_region[3]);
     io_printf(IO_BUF, "r5 0x%x\n", arm_probabilities);
+    io_printf(IO_BUF, "r6 %u\n", arm_probabilities[0]);
+    io_printf(IO_BUF, "r7 %u\n", arm_probabilities[1]);
+    io_printf(IO_BUF, "re %d\n", reward_based);
 //    io_printf(IO_BUF, "r6 0x%x\n", *arm_probabilities);
 //    io_printf(IO_BUF, "r6 0x%x\n", &arm_probabilities);
 
+    int highest_prob = 0;
+    for(int i=0; i<number_of_arms; i=i+1){
+        if(arm_probabilities[i] > highest_prob){
+            best_arm = i;
+            highest_prob = arm_probabilities[i];
+        }
+    }
 
     io_printf(IO_BUF, "Initialise: completed successfully\n");
 
@@ -213,10 +228,10 @@ bool was_there_a_reward(){
         choice = 0;
         highest_value = arm_choices[0];
     }
-//    io_printf(IO_BUF, "0 was spiked %d times, prob = %u\n", arm_choices[0], arm_probabilities[0]);
+    io_printf(IO_BUF, "0 was spiked %d times, prob = %u\n", arm_choices[0], arm_probabilities[0]);
     arm_choices[0] = 0;
     for(int i=1; i<number_of_arms; i=i+1){
-        if (arm_choices[i] >= highest_value && highest_value != 0){
+        if (arm_choices[i] >= highest_value && arm_choices[i] != 0){
             if(arm_choices[i] == highest_value){
                 if (mars_kiss64_seed(kiss_seed) % 2 == 0){
 //                if (rand() % 2 == 0){
@@ -229,20 +244,27 @@ bool was_there_a_reward(){
                 highest_value = arm_choices[i];
             }
         }
-//        io_printf(IO_BUF, "%d was spiked %d times, prob = %u\n", i, arm_choices[i], arm_probabilities[i]);
+        io_printf(IO_BUF, "%d was spiked %d times, prob = %u\n", i, arm_choices[i], arm_probabilities[i]);
         arm_choices[i] = 0;
     }
-    if (highest_value == 0){
+    io_printf(IO_BUF, "choice was %d and best arm was %d, score is %d, highest value: %d", choice, best_arm, current_score, highest_value);
+    if(choice == best_arm){
+        correct_pulls++;
+    }
+    else{
+        correct_pulls--;
+    }
+    if(highest_value == 0){
         return false;
     }
     else{
         uint32_t probability_roll;
     //    double max = RAND_MAX;
-    //    io_printf(IO_BUF, "rand = %d, max = %d\n", rand_no, RAND_MAX);
+//        io_printf(IO_BUF, "rand = %d, max = %d\n", rand_no, RAND_MAX);
         probability_roll = mars_kiss64_seed(kiss_seed);
     //    probability_roll = rand();
-    //    io_printf(IO_BUF, "prob_roll = %u\n", probability_roll);
-    //    io_printf(IO_BUF, "roll was %u and prob was %u, max = %u %d\n", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
+//        io_printf(IO_BUF, "prob_roll = %u\n", probability_roll);
+        io_printf(IO_BUF, "roll was %u and prob was %u, max = %u %d\n", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
         if(probability_roll < arm_probabilities[choice]){
     //        io_printf(IO_BUF, "reward given\n");
             return true;
@@ -338,7 +360,12 @@ void timer_callback(uint unused, uint dummy)
 //            update_frame();
             // Update recorded score every 1s
             if(score_change_count>=1000){
-                recording_record(0, &current_score, 4);
+                if(reward_based == 0){
+                    recording_record(0, &correct_pulls, 4);
+                }
+                else{
+                    recording_record(0, &current_score, 4);
+                }
                 score_change_count=0;
             }
         }
