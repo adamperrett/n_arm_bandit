@@ -228,7 +228,7 @@ bool was_there_a_reward(){
         choice = 0;
         highest_value = arm_choices[0];
     }
-    io_printf(IO_BUF, "0 was spiked %d times, prob = %u\n", arm_choices[0], arm_probabilities[0]);
+//    io_printf(IO_BUF, "0 was spiked %d times, prob = %u\n", arm_choices[0], arm_probabilities[0]);
     arm_choices[0] = 0;
     for(int i=1; i<number_of_arms; i=i+1){
         if (arm_choices[i] >= highest_value && arm_choices[i] != 0){
@@ -244,10 +244,10 @@ bool was_there_a_reward(){
                 highest_value = arm_choices[i];
             }
         }
-        io_printf(IO_BUF, "%d was spiked %d times, prob = %u\n", i, arm_choices[i], arm_probabilities[i]);
+//        io_printf(IO_BUF, "%d was spiked %d times, prob = %u\n", i, arm_choices[i], arm_probabilities[i]);
         arm_choices[i] = 0;
     }
-    io_printf(IO_BUF, "choice was %d and best arm was %d, score is %d, highest value: %d", choice, best_arm, current_score, highest_value);
+//    io_printf(IO_BUF, "choice was %d and best arm was %d, score is %d, highest value: %d", choice, best_arm, current_score, highest_value);
     if(choice == best_arm){
         correct_pulls++;
     }
@@ -264,7 +264,7 @@ bool was_there_a_reward(){
         probability_roll = mars_kiss64_seed(kiss_seed);
     //    probability_roll = rand();
 //        io_printf(IO_BUF, "prob_roll = %u\n", probability_roll);
-        io_printf(IO_BUF, "roll was %u and prob was %u, max = %u %d\n", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
+//        io_printf(IO_BUF, "roll was %u and prob was %u, max = %u %d\n", probability_roll, arm_probabilities[choice], RAND_MAX, RAND_MAX);
         if(probability_roll < arm_probabilities[choice]){
     //        io_printf(IO_BUF, "reward given\n");
             return true;
