@@ -224,6 +224,15 @@ bool was_there_a_reward(){
     int choice = -1; //mars_kiss64_seed(kiss_seed) % number_of_arms;
 //    int choice = rand() % number_of_arms;
     int highest_value = 0;
+    int min_spikes = 100000000;
+    for(int i=0; i<number_of_arms; i=i+1){
+        if(arm_choices[i] < min_spikes){
+            min_spikes = arm_choices[i];
+        }
+    }
+    for(int i=0; i<number_of_arms; i=i+1){
+        arm_choices[i] = arm_choices[i] - min_spikes;
+    }
     if(arm_choices[0] > highest_value){
         choice = 0;
         highest_value = arm_choices[0];

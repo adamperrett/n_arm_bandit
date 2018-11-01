@@ -223,8 +223,6 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     save_champion()
     # tracker.print_diff()
 
-    time.sleep(5)
-
     #Acquire all connection matrices and node types
 
     print len(pop)
@@ -236,6 +234,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     for trial in range(number_of_epochs):
         try_except = 0
         while try_except < try_attempts:
+            time.sleep(5)
             bandit_pops = []
             # receive_on_pops = []
             hidden_node_pops = []
@@ -394,19 +393,20 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
 
         hidden_count = 0
         new_spike_counts = []
+        out_spike_count = [0 for i in range(len(pop))]
+        hid_spike_count = [0 for i in range(len(pop))]
         for i in range(len(pop)):
-            spike_count = 0
             spikes = output_pops[i].get_data('spikes').segments[0].spiketrains
             for neuron in spikes:
                 for spike in neuron:
-                    spike_count += 1
+                    out_spike_count[i] += 1
             if i in hidden_marker:
                 spikes = hidden_node_pops[hidden_count].get_data('spikes').segments[0].spiketrains
                 hidden_count += 1
                 for neuron in spikes:
                     for spike in neuron:
-                        spike_count += 1
-            new_spike_counts.append(spike_count)
+                        hid_spike_count[i] += 1
+            new_spike_counts.append(hid_spike_count[i] + out_spike_count[i])
         spike_counts.append(new_spike_counts)
 
         print "reached here 2"
@@ -444,7 +444,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
 
         j = 0
         for score in scores[trial]:
-            print j, "s:", new_spike_counts[j], score
+            print j, "s:", new_spike_counts[j], "o:", out_spike_count[j], "h:", hid_spike_count[j], score
             j += 1
         print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
             "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight\
@@ -558,7 +558,7 @@ shared_probabilities = True
 grooming = 'cap'
 reward_based = 0
 spike_cap = 10000
-noise_rate = 0
+noise_rate = 100
 noise_weight = 0.01
 
 # UDP port to read spikes from

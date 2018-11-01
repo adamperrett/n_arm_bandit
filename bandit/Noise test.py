@@ -48,7 +48,7 @@ def test_levels(rates=(150, 125, 100), weights=(0.01, 0.015)):
     # End simulation
     p.end()
 
-def test_packets(rate=100, weight=0.01, probability=0.7, pop_size=2, count=200, with_bandit=False):
+def test_packets(rate=100, weight=0.01, probability=0.7, seed=27, pop_size=2, count=200, with_bandit=False):
     counter = 0
     receive_pop = []
     output_pop = []
@@ -62,8 +62,6 @@ def test_packets(rate=100, weight=0.01, probability=0.7, pop_size=2, count=200, 
         receive_pop.append(p.Population(pop_size, p.IF_cond_exp(), label="receive_pop{}".format(i)))
         output_pop.append(p.Population(2, p.IF_cond_exp(), label="output_pop{}".format(i)))
         p.Projection(receive_pop[counter], output_pop[counter], p.AllToAllConnector(), p.StaticSynapse(weight=0.1))
-        seed = np.random.randint(0,1000)
-        print "seed:", seed
         np.random.seed(seed)
         p.Projection(receive_pop[counter], receive_pop[counter], p.FixedProbabilityConnector(probability), p.StaticSynapse(weight=0.1))
         p.Projection(output_pop[counter], output_pop[counter], p.FixedProbabilityConnector(probability), p.StaticSynapse(weight=0.1))
@@ -83,6 +81,9 @@ def test_packets(rate=100, weight=0.01, probability=0.7, pop_size=2, count=200, 
         spike_input.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=rate), label="input_connect{}-{}".format(rate, weight)))
         p.Projection(
             spike_input[counter], receive_pop[counter], p.OneToOneConnector(), p.StaticSynapse(weight=weight))
+        spike_output.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=rate), label="input_connect{}-{}".format(rate, weight)))
+        p.Projection(
+            spike_input[counter], receive_pop[counter], p.OneToOneConnector(), p.StaticSynapse(weight=weight))
 
         runtime = 21000
 
@@ -99,5 +100,7 @@ def test_packets(rate=100, weight=0.01, probability=0.7, pop_size=2, count=200, 
     print "ended"
 
 # test_levels()
-for prob in range(0,1,0.1):
-    test_packets(probability=prob)
+for prob in np.linspace(0,1,10):
+    seed = np.random.randint(0,1000)
+    print "seed:", seed, "prob:", prob
+    test_packets(probability=prob, seed=seed)
