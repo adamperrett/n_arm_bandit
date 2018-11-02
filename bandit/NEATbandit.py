@@ -216,9 +216,6 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     #test the whole population and return scores
     global all_fails
     print "start"
-    print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
-        "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight\
-        , "- grooming:", grooming, "- reward:", reward_based
     gen_stats(pop)
     save_champion()
     # tracker.print_diff()
@@ -234,6 +231,9 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     for trial in range(number_of_epochs):
         try_except = 0
         while try_except < try_attempts:
+            print "\narms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
+                "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, "/", \
+                noise_weight, "- grooming:", grooming, "- reward:", reward_based, "\n"
             time.sleep(5)
             bandit_pops = []
             # receive_on_pops = []
@@ -446,9 +446,9 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         for score in scores[trial]:
             print j, "s:", new_spike_counts[j], "o:", out_spike_count[j], "h:", hid_spike_count[j], score
             j += 1
-        print "arms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
-            "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, noise_weight\
-            , "- grooming:", grooming, "- reward:", reward_based
+        print "\narms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
+            "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, "/", \
+            noise_weight, "- grooming:", grooming, "- reward:", reward_based, "\n"
         if shared_probabilities == True:
             print "probabilities = ", arms
         # End simulation
@@ -558,7 +558,7 @@ shared_probabilities = True
 grooming = 'cap'
 reward_based = 0
 spike_cap = 10000
-noise_rate = 100
+noise_rate = 0
 noise_weight = 0.01
 
 # UDP port to read spikes from
