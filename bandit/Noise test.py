@@ -81,7 +81,7 @@ def test_packets(rate=100, weight=0.01, probability=0.7, seed=27, pop_size=2, co
         spike_input.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=rate), label="input_connect{}-{}".format(rate, weight)))
         p.Projection(
             spike_input[counter], receive_pop[counter], p.OneToOneConnector(), p.StaticSynapse(weight=weight))
-        spike_output.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=rate), label="input_connect{}-{}".format(rate, weight)))
+        # spike_output.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=rate), label="input_connect{}-{}".format(rate, weight)))
         p.Projection(
             spike_input[counter], receive_pop[counter], p.OneToOneConnector(), p.StaticSynapse(weight=weight))
 
@@ -103,4 +103,4 @@ def test_packets(rate=100, weight=0.01, probability=0.7, seed=27, pop_size=2, co
 for prob in np.linspace(0,1,10):
     seed = np.random.randint(0,1000)
     print "seed:", seed, "prob:", prob
-    test_packets(probability=prob, seed=seed)
+    test_packets(probability=prob, seed=seed, with_bandit=False)
