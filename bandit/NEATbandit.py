@@ -524,7 +524,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     pop_scores.sort(key=lambda x: x[1])
     pop_spikes.sort(key=lambda x: x[1])
     for i in range(len(pop)):
-        pop[i].stats = {'fitness': combined_fitness[i], 'score': float(format(pop_scores[i][0], '.3f')), 'spikes': pop_spikes[i][0]}
+        pop[i].stats = {'fitness': combined_fitness[i], 'score': float(format(pop_scores[i][0], '.3f')), 'spikes': -pop_spikes[i][0]}
     print "finished all epochs"
     print "max probabilities were ", max_arms
     print "floor score is ", format(min_score, '.5f')
@@ -597,7 +597,7 @@ number_of_epochs = 2
 fixed_arms = [[0.8, 0.2], [0.2, 0.8]]
 complimentary = True
 shared_probabilities = True
-grooming = 'both'
+grooming = 'cap'
 reward_based = 0
 spike_cap = 10000
 noise_rate = 0
