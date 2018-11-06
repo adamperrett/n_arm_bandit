@@ -444,20 +444,21 @@ def test_agent(pop):
 
 runtime = 31000
 
-reward_based = 0
+reward_based = 1
 duration_of_trial = 200
 
 noise_rate = 0
 noise_weight = 0.01
 delay = 2
 
-arms = [0.8, 0.2]
-# arms = [0.2, 0.8]
+# arms = [0.8, 0.2]
+arms = [0.2, 0.8]
 output_size = len(arms)
 input_size = 2
 
 # file = 'NEAT bandit champion 268 - a2 -e2 - cTrue - sTrue - n0-0.01 - gcap - r0 f=0.46.csv'
-file = 'NEAT bandit champion score 0 - a2 -e1 - cTrue - sTrue - n0-0.01 - gboth - r0 f=0.98.csv'
+# file = 'NEAT bandit champion score 0 - a2 -e1 - cTrue - sTrue - n0-0.01 - gboth - r0 f=0.98.csv'
+file = 'f=0.65 - a2 -e2 - cTrue - sTrue - n0-0.01 - gcap - r1.csv'
 hyper = False
 
 # if hyper == True:

@@ -389,12 +389,12 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 all_fails += 1
                 try_except += 1
                 print "\nfailed to run on attempt", try_except, ". total fails:", all_fails, "\n"
-                new_scores = []
-                for i in range(len(pop)):
-                    if i not in flagged_agents:
-                        new_scores.append(get_scores(bandit_pop=bandit_pops[i], simulator=simulator))
-                        if new_scores[i] > spike_cap:
-                            flagged_agents.append(i)
+                # new_scores = []
+                # for i in range(len(pop)):
+                #     if i not in flagged_agents:
+                #         new_scores.append(get_scores(bandit_pop=bandit_pops[i], simulator=simulator))
+                #         if new_scores[i] > spike_cap:
+                #             flagged_agents.append(i)
 
                 # p.end()
 
@@ -552,7 +552,7 @@ def save_champion(agent_pop):
                     best_agent = i
             except:
                 None
-        with open('NEAT bandit champion score {}-{} - a{} -e{} - c{} - s{} - n{}-{} - g{} - r{}.csv'.format(
+        with open('NEAT bandit champion score {}:{} - a{} -e{} - c{} - s{} - n{}-{} - g{} - r{}.csv'.format(
                 iteration, best_score, number_of_arms, number_of_epochs, complimentary, shared_probabilities,
                 noise_rate, noise_weight, grooming, reward_based), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
@@ -598,7 +598,7 @@ fixed_arms = [[0.8, 0.2], [0.2, 0.8]]
 complimentary = True
 shared_probabilities = True
 grooming = 'both'
-reward_based = 1
+reward_based = 0
 spike_cap = 10000
 noise_rate = 0
 noise_weight = 0.01
