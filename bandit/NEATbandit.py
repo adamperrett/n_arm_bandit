@@ -215,6 +215,8 @@ def connect_genes_to_fromlist(number_of_nodes, connections, nodes):
 def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     #test the whole population and return scores
     global all_fails
+    # global empty_pre_count
+    global empty_post_count
     print "start"
     gen_stats(pop)
     save_champion(pop)
@@ -232,6 +234,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     for trial in range(number_of_epochs):
         try_except = 0
         while try_except < try_attempts:
+            print "\nempty_post_count:", empty_post_count  # , "empty_pre_count:", empty_pre_count
             print "\narms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
                 "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, "/", \
                 noise_weight, "- grooming:", grooming, "- reward:", reward_based, "\n"
@@ -252,7 +255,6 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
 
                     [i2i_ex, i2h_ex, i2o_ex, h2i_ex, h2h_ex, h2o_ex, o2i_ex, o2h_ex, o2o_ex, i2i_in, i2h_in, i2o_in, h2i_in, h2h_in, h2o_in, o2i_in, o2h_in, o2o_in] = \
                         connect_genes_to_fromlist(number_of_nodes, pop[i].conn_genes, pop[i].node_genes)
-                    # print "after creating connections"
                     # tracker.print_diff()
                     # [i2i, i2h, i2o, h2i, h2h, h2o, o2i, o2h, o2o] = cm_to_fromlist(number_of_nodes, networks[i].cm)
                     if (i == 0 or shared_probabilities == False) and try_except == 0:
@@ -371,6 +373,20 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                     if len(o2o_in) != 0:
                         p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_in),
                                      receptor_type='inhibitory')
+                    if len(i2i_in) == 0 and len(i2i_ex) == 0 and \
+                            len(i2h_in) == 0 and len(i2h_ex) == 0 and \
+                            len(i2o_in) == 0 and len(i2o_ex) == 0:
+                        print "empty out from bandit, adding empty pop to complete link"
+                        empty_post = p.Population(1, p.IF_cond_exp(), label="empty_post {}".format(i))
+                        p.Projection(bandit_pops[i], empty_post, p.AllToAllConnector())
+                        empty_post_count += 1
+                    # if len(i2i_in) == 0 and len(i2i_ex) == 0 and \
+                    #         len(h2i_in) == 0 and len(h2i_ex) == 0 and \
+                    #         len(o2i_in) == 0 and len(o2i_ex) == 0:
+                    #     print "empty in from bandit, adding empty pop to complete link"
+                    #     empty_pre = p.Population(1, p.IF_cond_exp(), label="output_pre {}".format(i))
+                    #     p.Projection(empty_pre, bandit_pops[i], p.AllToAllConnector())
+                    #     empty_pre_count += 1
                     # print "after creating projections"
                     # tracker.print_diff()
 
@@ -462,6 +478,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         for score in scores[trial]:
             print j, "s:", new_spike_counts[j], "o:", out_spike_count[j], "h:", hid_spike_count[j], score
             j += 1
+        print "\nempty_post_count:", empty_post_count  # , "empty_pre_count:", empty_pre_count
         print "\narms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
             "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, "/", \
             noise_weight, "- grooming:", grooming, "- reward:", reward_based, "\n"
@@ -598,9 +615,9 @@ fixed_arms = [[0.8, 0.2], [0.2, 0.8]]
 complimentary = True
 shared_probabilities = True
 grooming = 'cap'
-reward_based = 0
+reward_based = 1
 spike_cap = 10000
-noise_rate = 0
+noise_rate = 50
 noise_weight = 0.01
 
 # UDP port to read spikes from
@@ -612,6 +629,8 @@ duration_of_trial = 200
 runtime = number_of_trials * duration_of_trial
 try_attempts = 5
 all_fails = 0
+# empty_pre_count = 0
+empty_post_count = 0
 
 weight_max = 1.0
 weight_scale = 1.0
@@ -640,9 +659,9 @@ genotype = lambda: NEATGenotype(inputs=input_size,
 
 # Create a population
 NEAT_pop = NEATPopulation(genotype, popsize=200,
-                     stagnation_age=30,
-                     old_age=75,
-                          target_species=5)
+                     stagnation_age=40,
+                     old_age=100,
+                          target_species=8)
 
 # Run the evolution, tell it to use the task as an evaluator
 print "beginning epoch"

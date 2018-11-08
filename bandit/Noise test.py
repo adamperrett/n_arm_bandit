@@ -100,7 +100,9 @@ def test_packets(rate=100, weight=0.01, probability=0.7, seed=27, pop_size=2, co
     print "ended"
 
 # test_levels()
-for prob in np.linspace(0,1,10):
+for prob in np.linspace(0.2,1,100):
     seed = np.random.randint(0,1000)
     print "seed:", seed, "prob:", prob
-    test_packets(probability=prob, seed=seed, with_bandit=False)
+    test_packets(probability=prob, seed=seed, with_bandit=True)
+
+print "done all"
