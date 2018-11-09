@@ -217,6 +217,8 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     global all_fails
     # global empty_pre_count
     global empty_post_count
+    global not_needed_ends
+    global working_ends
     print "start"
     gen_stats(pop)
     save_champion(pop)
@@ -234,7 +236,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     for trial in range(number_of_epochs):
         try_except = 0
         while try_except < try_attempts:
-            print "\nempty_post_count:", empty_post_count  # , "empty_pre_count:", empty_pre_count
+            print "\nempty_post_count:", empty_post_count, " - ends good/bad:", working_ends, "/", not_needed_ends
             print "\narms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
                 "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, "/", \
                 noise_weight, "- grooming:", grooming, "- reward:", reward_based, "\n"
@@ -402,9 +404,16 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 break
             except:
                 traceback.print_exc()
+                try:
+                    p.end()
+                    working_ends += 1
+                except:
+                    traceback.print_exc()
+                    not_needed_ends += 1
                 all_fails += 1
                 try_except += 1
-                print "\nfailed to run on attempt", try_except, ". total fails:", all_fails, "\n"
+                print "\nfailed to run on attempt", try_except, ". total fails:", all_fails, "\n" \
+                        "ends good/bad:", working_ends, "/", not_needed_ends
                 # new_scores = []
                 # for i in range(len(pop)):
                 #     if i not in flagged_agents:
@@ -478,7 +487,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
         for score in scores[trial]:
             print j, "s:", new_spike_counts[j], "o:", out_spike_count[j], "h:", hid_spike_count[j], score
             j += 1
-        print "\nempty_post_count:", empty_post_count  # , "empty_pre_count:", empty_pre_count
+        print "\nempty_post_count:", empty_post_count, " - ends good/bad:", working_ends, "/", not_needed_ends
         print "\narms:", number_of_arms, "- epochs:", number_of_epochs, "- complimentary:", complimentary, \
             "- shared:", shared_probabilities, "- fails:", all_fails, "- noise rate/weight:", noise_rate, "/", \
             noise_weight, "- grooming:", grooming, "- reward:", reward_based, "\n"
@@ -579,11 +588,13 @@ def save_champion(agent_pop):
                 writer.writerow(i)
             for i in agent_pop[best_agent].stats:
                 writer.writerow(["fitness {}".format(i), agent_pop[best_agent].stats[i]])
+            file.close()
         with open('NEAT bandit champions score a{} - c{} -e{} - s{} - n{}-{} - g{} - r{}.csv'.format(
                 number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight,
                 grooming, reward_based), 'a') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             writer.writerow([iteration, best_score])
+            file.close()
         with open('NEAT bandit champion {} - a{} -e{} - c{} - s{} - n{}-{} - g{} - r{}.csv'.format(
                 iteration, number_of_arms, number_of_epochs, complimentary, shared_probabilities, noise_rate,
                 noise_weight, grooming, reward_based), 'w') as file:
@@ -594,6 +605,7 @@ def save_champion(agent_pop):
                 writer.writerow(i)
             for i in NEAT_pop.champions[iteration].stats:
                 writer.writerow(["fitness {}".format(i), NEAT_pop.champions[iteration].stats[i]])
+            file.close()
             # writer.writerow("\n")
         with open('NEAT bandit champions a{} - c{} -e{} - s{} - n{}-{} - g{} - r{}.csv'.format(
                 number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight,
@@ -605,19 +617,20 @@ def save_champion(agent_pop):
                 writer.writerow(i)
             for i in NEAT_pop.champions[iteration].stats:
                 writer.writerow(["fitness {}".format(i), NEAT_pop.champions[iteration].stats[i]])
+            file.close()
 
 # gc.set_debug(gc.DEBUG_LEAK)
 
 
 number_of_arms = 2
 number_of_epochs = 2
-fixed_arms = [[0.8, 0.2], [0.2, 0.8]]
+fixed_arms = [[0.9, 0.1], [0.1, 0.9]]
 complimentary = True
 shared_probabilities = True
 grooming = 'cap'
-reward_based = 1
+reward_based = 0
 spike_cap = 10000
-noise_rate = 50
+noise_rate = 0
 noise_weight = 0.01
 
 # UDP port to read spikes from
@@ -629,6 +642,8 @@ duration_of_trial = 200
 runtime = number_of_trials * duration_of_trial
 try_attempts = 5
 all_fails = 0
+working_ends = 0
+not_needed_ends = 0
 # empty_pre_count = 0
 empty_post_count = 0
 
