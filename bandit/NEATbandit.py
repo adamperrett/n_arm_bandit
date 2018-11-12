@@ -5,6 +5,7 @@ from spynnaker.pyNN.connections.\
     spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 from pympler.tracker import SummaryTracker
+from spinn_front_end_common.utilities import globals_variables
 
 import pylab
 from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
@@ -405,7 +406,7 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
             except:
                 traceback.print_exc()
                 try:
-                    p.end()
+                    globals_variables.unset_simulator()
                     working_ends += 1
                 except:
                     traceback.print_exc()
@@ -527,6 +528,11 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 if pop_spikes[i][0] > number_of_trials:
                     failed_spikes += 1
                 combined_fitness[pop_spikes[i][1]] += failed_spikes
+        elif grooming == 'weighted':
+            if pop_scores[i][0] != min_score:
+                # failed_score += 1
+                combined_fitness[pop_scores[i][1]] += i#failed_score
+                combined_fitness[pop_spikes[i][1]] += i * spike_weight
         elif grooming == 'cap':
             if pop_spikes[i][0] > spike_cap:
                 combined_fitness[pop_spikes[i][1]] -= 10000
@@ -629,7 +635,8 @@ complimentary = True
 shared_probabilities = True
 grooming = 'cap'
 reward_based = 0
-spike_cap = 10000
+spike_cap = 30000
+spike_weight = 0.1
 noise_rate = 0
 noise_weight = 0.01
 
