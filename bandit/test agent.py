@@ -20,6 +20,9 @@ import traceback
 import random
 import gc
 import fnmatch
+import matplotlib.pyplot as plt
+
+from pyNN.utility.plotting import Figure, Panel
 
 from peas.methods.neat import NEATPopulation, NEATGenotype
 from peas.networks.rnn import NeuralNetwork
@@ -407,6 +410,26 @@ def test_agent(pop):
 
     scores = get_scores(bandit_pop=bandit_pop, simulator=simulator)
 
+    spikes_h = hidden_node_pop.get_data('spikes').segments[0].spiketrains
+    hidden_spikes = 0
+    for neuron in spikes_h:
+        for spike in neuron:
+            # print spike
+            hidden_spikes += 1
+
+    spikes_o = output_pop.get_data('spikes').segments[0].spiketrains
+    out_spikes = 0
+    for neuron in spikes_o:
+        for spike in neuron:
+            # print spike
+            out_spikes += 1
+    Figure(
+        Panel(spikes_h, xlabel="Time (ms)", ylabel="nID", xticks=True),
+        Panel(spikes_o, xlabel="Time (ms)", ylabel="nID", xticks=True)#,
+        # Panel(spikes_t, xlabel="Time (ms)", ylabel="nID", xticks=True)
+    )
+    plt.show()
+
     # pylab.figure()
     # spikes_on = bandit_pop.getSpikes()
     # ax = pylab.subplot(1, 3, 1)#4, 1)
@@ -415,7 +438,7 @@ def test_agent(pop):
     # pylab.ylabel("neuron ID")
     # pylab.axis([0, runtime, -1, receive_pop_size + 1])
     # # pylab.show()
-    # # pylab.figure()
+    # pylab.figure()
     # if hidden_size != 0:
     #     spikes_on = hidden_node_pop.getSpikes()
     #     ax = pylab.subplot(1, 3, 2)#4, 1)
@@ -452,13 +475,17 @@ noise_weight = 0.01
 delay = 2
 
 # arms = [0.8, 0.2]
-arms = [0.2, 0.8]
+# arms = [0.2, 0.8]
+arms = [0.1, 0.9]
+# arms = [0.9, 0.1]
 output_size = len(arms)
 input_size = 2
 
 # file = 'NEAT bandit champion 268 - a2 -e2 - cTrue - sTrue - n0-0.01 - gcap - r0 f=0.46.csv'
 # file = 'NEAT bandit champion score 0 - a2 -e1 - cTrue - sTrue - n0-0.01 - gboth - r0 f=0.98.csv'
-file = 'f=0.65 - a2 -e2 - cTrue - sTrue - n0-0.01 - gcap - r1.csv'
+# file = 'f=0.65 - a2 -e2 - cTrue - sTrue - n0-0.01 - gcap - r1.csv'
+# file = 'NEAT bandit champion score 58:1.689 - a2 -e2 - cTrue - sTrue - n50-0.01 - gcap - r1.csv'
+file = 'NEAT bandit champion score 122:0.889 - a2 -e2 - cTrue - sTrue - n0-0.01 - gweighted - r1.csv'
 hyper = False
 
 # if hyper == True:
