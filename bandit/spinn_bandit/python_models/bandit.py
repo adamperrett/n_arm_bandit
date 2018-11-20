@@ -104,6 +104,7 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
     def clear_connection_cache(self):
         pass
 
+    @overrides(AbstractAcceptsIncomingSynapses.get_synapse_id_by_target)
     def get_synapse_id_by_target(self, target):
         return 0
 
