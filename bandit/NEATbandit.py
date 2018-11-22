@@ -20,6 +20,7 @@ import csv
 import traceback
 import random
 import gc
+from ast import literal_eval
 
 from peas.methods.neat import NEATPopulation, NEATGenotype
 from peas.networks.rnn import NeuralNetwork
@@ -31,6 +32,18 @@ def get_scores(bandit_pop,simulator):
         simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
 
     return scores.tolist()
+
+def read_fitnesses(config):
+    fitnesses = []
+    file_name = 'fitnesses {}.csv'.format(config)
+    with open(file_name) as from_file:
+        csvFile = csv.reader(from_file)
+        for row in csvFile:
+            metric = []
+            for thing in row:
+                metric.append(literal_eval(thing))
+            fitnesses.append(metric)
+    return fitnesses
 
 def row_col_to_input_bandit(row, col, is_on_input, row_bits, event_bits=1, colour_bits=1, row_start=0):
     row_bits = np.uint32(row_bits)
@@ -213,7 +226,16 @@ def connect_genes_to_fromlist(number_of_nodes, connections, nodes):
 
     return i2i_ex, i2h_ex, i2o_ex, h2i_ex, h2h_ex, h2o_ex, o2i_ex, o2h_ex, o2o_ex, i2i_in, i2h_in, i2o_in, h2i_in, h2h_in, h2o_in, o2i_in, o2h_in, o2o_in
 
-def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
+def thread_pop(pop):
+    # gen_stats(pop)
+    # save_champion(pop)
+    globals()['pop'] = pop
+    globals()['arms'] = fixed_arms
+    execfile("exec_bandit.py", globals())
+    fitnesses = read_fitnesses(config)
+    #todo process the fitnesses coming out of here
+
+def test_pop(pop):#, noise_rate=50, noise_weight=1):
     #test the whole population and return scores
     global all_fails
     # global empty_pre_count
@@ -221,8 +243,6 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     global not_needed_ends
     global working_ends
     print "start"
-    gen_stats(pop)
-    save_champion(pop)
     # tracker.print_diff()
 
     #Acquire all connection matrices and node types
@@ -415,14 +435,6 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
                 try_except += 1
                 print "\nfailed to run on attempt", try_except, ". total fails:", all_fails, "\n" \
                         "ends good/bad:", working_ends, "/", not_needed_ends
-                # new_scores = []
-                # for i in range(len(pop)):
-                #     if i not in flagged_agents:
-                #         new_scores.append(get_scores(bandit_pop=bandit_pops[i], simulator=simulator))
-                #         if new_scores[i] > spike_cap:
-                #             flagged_agents.append(i)
-
-                # p.end()
 
 
         hidden_count = 0
@@ -456,33 +468,6 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
             else:
                 new_scores.append(-10000000)
         scores.append(new_scores)
-        #     if i == 0:
-        #         pylab.figure()
-        #     spikes_on = output_pops[i].getSpikes()
-        #     ax = pylab.subplot(1, len(pop), i+1)#4, 1)
-        #     pylab.plot([i[1] for i in spikes_on], [i[0] for i in spikes_on], "r.")
-        #     pylab.xlabel("Time (ms)")
-        #     pylab.ylabel("neuron ID")
-        #     pylab.axis([0, runtime, -1, output_size + 1])
-        # pylab.show()
-        # # pylab.figure()
-        # # for i in range(hidden_count):
-        # #     spikes_on = hidden_node_pops[i].getSpikes()
-        # #     ax = pylab.subplot(1, len(pop), i+1)#4, 1)
-        # #     pylab.plot([i[1] for i in spikes_on], [i[0] for i in spikes_on], "r.")
-        # #     pylab.xlabel("Time (ms)")
-        # #     pylab.ylabel("neuron ID")
-        # #     pylab.axis([0, runtime, -1, receive_pop_size + 1])
-        # # pylab.show()
-        # pylab.figure()
-        # for i in range(len(pop)):
-        #     spikes_on = receive_on_pops[i].getSpikes()
-        #     ax = pylab.subplot(1, len(pop), i+1)#4, 1)
-        #     pylab.plot([i[1] for i in spikes_on], [i[0] for i in spikes_on], "r.")
-        #     pylab.xlabel("Time (ms)")
-        #     pylab.ylabel("neuron ID")
-        #     pylab.axis([0, runtime, -1, receive_pop_size + 1])
-        # pylab.show()
 
         j = 0
         for score in scores[trial]:
@@ -560,13 +545,6 @@ def test_pop(pop, tracker):#, noise_rate=50, noise_weight=1):
     print "finished all epochs"
     print "max probabilities were ", max_arms
     print "floor score is ", format(min_score, '.5f')
-    # for i in range(len(pop)):
-    #     print i, "|", pop[i].stats['fitness']
-    # print "floor score is ", format(min_score, '.5f')
-    # print "finished all epochs"
-    # print "max probabilities were ", max_arms
-    # gc.DEBUG_STATS
-    # gc.DEBUG_COLLECTABLE
 
 def gen_stats(list_pop):
     # pop._gather_stats(list_pop)
@@ -584,9 +562,7 @@ def save_champion(agent_pop):
                     best_agent = i
             except:
                 None
-        with open('NEAT bandit champion score {}:{} - a{} -e{} - c{} - s{} - n{}-{} - g{} - r{}.csv'.format(
-                iteration, best_score, number_of_arms, number_of_epochs, complimentary, shared_probabilities,
-                noise_rate, noise_weight, grooming, reward_based), 'w') as file:
+        with open('NEAT bandit champion score {}:{} - {}.csv'.format(iteration, best_score, config), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in agent_pop[best_agent].conn_genes:
                 writer.writerow(agent_pop[best_agent].conn_genes[i])
@@ -595,15 +571,11 @@ def save_champion(agent_pop):
             for i in agent_pop[best_agent].stats:
                 writer.writerow(["fitness {}".format(i), agent_pop[best_agent].stats[i]])
             file.close()
-        with open('NEAT bandit champions score a{} - c{} -e{} - s{} - n{}-{} - g{} - r{}.csv'.format(
-                number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight,
-                grooming, reward_based), 'a') as file:
+        with open('NEAT bandit champions score {}.csv'.format(config), 'a') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             writer.writerow([iteration, best_score])
             file.close()
-        with open('NEAT bandit champion {} - a{} -e{} - c{} - s{} - n{}-{} - g{} - r{}.csv'.format(
-                iteration, number_of_arms, number_of_epochs, complimentary, shared_probabilities, noise_rate,
-                noise_weight, grooming, reward_based), 'w') as file:
+        with open('NEAT bandit champion {} - {}.csv'.format(iteration, config), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in NEAT_pop.champions[iteration].conn_genes:
                 writer.writerow(NEAT_pop.champions[iteration].conn_genes[i])
@@ -613,9 +585,7 @@ def save_champion(agent_pop):
                 writer.writerow(["fitness {}".format(i), NEAT_pop.champions[iteration].stats[i]])
             file.close()
             # writer.writerow("\n")
-        with open('NEAT bandit champions a{} - c{} -e{} - s{} - n{}-{} - g{} - r{}.csv'.format(
-                number_of_arms, complimentary, number_of_epochs, shared_probabilities, noise_rate, noise_weight,
-                grooming, reward_based), 'a') as file:
+        with open('NEAT bandit champions {}.csv'.format(config), 'a') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for i in NEAT_pop.champions[iteration].conn_genes:
                 writer.writerow(NEAT_pop.champions[iteration].conn_genes[i])
@@ -647,7 +617,7 @@ UDP_PORT2 = UDP_PORT1 + 1
 number_of_trials = 100
 duration_of_trial = 200
 runtime = number_of_trials * duration_of_trial
-try_attempts = 5
+try_attempts = 2
 all_fails = 0
 working_ends = 0
 not_needed_ends = 0
@@ -660,10 +630,12 @@ delay = 2
 
 weight = 0.1
 
-# p.setup(timestep=1.0)
-# p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-# bandit_connections = p.FromListConnector(Connections_on)
-# p.end()
+# exec_bandit = False
+exec_bandit = True
+
+config = 'a{} -e{} - c{} - s{} - n{}-{} - g{} - r{}'.format(number_of_arms, number_of_epochs, complimentary,
+                                                                        shared_probabilities, noise_rate, noise_weight,
+                                                                        grooming, reward_based)
 
 #current rounds off each number to create a super rounded off int
 input_size = 2
@@ -680,15 +652,17 @@ genotype = lambda: NEATGenotype(inputs=input_size,
                                 feedforward=False)
 
 # Create a population
-NEAT_pop = NEATPopulation(genotype, popsize=200,
-                     stagnation_age=40,
-                     old_age=100,
-                          target_species=8)
+NEAT_pop = NEATPopulation(genotype, popsize=100,
+                             stagnation_age=40,
+                             old_age=100,
+                             target_species=8)
 
 # Run the evolution, tell it to use the task as an evaluator
 print "beginning epoch"
-tracker = SummaryTracker()
-NEAT_pop.epoch(tracker=tracker, generations=2000, evaluator=test_pop, solution=None, SpiNNaker=True)
+if exec_bandit:
+    NEAT_pop.epoch(generations=1000, evaluator=thread_pop, solution=None, SpiNNaker=True)
+else:
+    NEAT_pop.epoch(generations=1000, evaluator=test_pop, solution=None, SpiNNaker=True)
 save_champion()
 
 

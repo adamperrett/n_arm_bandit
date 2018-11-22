@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from bandit.spinn_bandit.python_models.bandit import Bandit
 import numpy as np
 
-def test_levels(rates=(150, 125, 100), weights=(0.01, 0.015)):
+def test_levels(rates=(1, 5), weights=(0.1, 0.09, 0.08, 0.07), pop_size=1):
     counter = 0
     receive_pop = []
     spike_input = []
@@ -12,7 +12,6 @@ def test_levels(rates=(150, 125, 100), weights=(0.01, 0.015)):
     p.set_number_of_neurons_per_core(p.IF_cond_exp, 10)
     for rate in rates:
         for weight in weights:
-            pop_size = 10
             receive_pop.append(p.Population(pop_size, p.IF_cond_exp()))#, label="receive_pop{}-{}".format(rate, weight)))
 
             receive_pop[counter].record(['spikes', 'v'])#["spikes"])
@@ -99,10 +98,10 @@ def test_packets(rate=100, weight=0.01, probability=0.7, seed=27, pop_size=2, co
     p.end()
     print "ended"
 
-# test_levels()
-for prob in np.linspace(0.2,1,100):
-    seed = np.random.randint(0,1000)
-    print "seed:", seed, "prob:", prob
-    test_packets(probability=prob, seed=seed, with_bandit=True)
+test_levels()
+# for prob in np.linspace(0.2,1,100):
+#     seed = np.random.randint(0,1000)
+#     print "seed:", seed, "prob:", prob
+#     test_packets(probability=prob, seed=seed, with_bandit=True)
 
 print "done all"
