@@ -86,8 +86,8 @@ def test_pop(pop, local_arms):#, noise_rate=50, noise_weight=1):
     global not_needed_ends
     global working_ends
     print "start"
-    gen_stats(pop)
-    save_champion(pop)
+    # gen_stats(pop)
+    # save_champion(pop)
     # tracker.print_diff()
 
     #Acquire all connection matrices and node types
@@ -241,7 +241,6 @@ def test_pop(pop, local_arms):#, noise_rate=50, noise_weight=1):
     print "gathering spikes"
     for i in range(len(pop)):
         if i not in flagged_agents:
-            print "not flagged ", i
             spikes = output_pops[i].get_data('spikes').segments[0].spiketrains
             for neuron in spikes:
                 for spike in neuron:

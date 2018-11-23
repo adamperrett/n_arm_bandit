@@ -227,13 +227,40 @@ def connect_genes_to_fromlist(number_of_nodes, connections, nodes):
     return i2i_ex, i2h_ex, i2o_ex, h2i_ex, h2h_ex, h2o_ex, o2i_ex, o2h_ex, o2o_ex, i2i_in, i2h_in, i2o_in, h2i_in, h2h_in, h2o_in, o2i_in, o2h_in, o2o_in
 
 def thread_pop(pop):
-    # gen_stats(pop)
-    # save_champion(pop)
+    gen_stats(pop)
+    save_champion(pop)
     globals()['pop'] = pop
     globals()['arms'] = fixed_arms
     execfile("exec_bandit.py", globals())
     fitnesses = read_fitnesses(config)
-    #todo process the fitnesses coming out of here
+    sorted_metrics = []
+    combined_spikes = [[0, i] for i in range(len(pop))]
+    for i in range(len(fitnesses)):
+        indexed_metric = []
+        for j in range(len(fitnesses[i])):
+            if fitnesses[i][j][0] == 'fail':
+                indexed_metric.append([-10000000, j])
+            else:
+                indexed_metric.append([fitnesses[i][j][0], j])
+            combined_spikes[j][0] -= fitnesses[i][j][1]
+        indexed_metric.sort()
+        sorted_metrics.append(indexed_metric)
+    combined_spikes.sort()
+    sorted_metrics.append(combined_spikes)
+
+    if grooming != 'cap':
+        combined_fitnesses = [0 for i in range(len(pop))]
+        for i in range(len(pop)):
+            for j in range(len(sorted_metrics)):
+                combined_fitnesses[sorted_metrics[j][i][1]] += i
+    else:
+        combined_fitnesses = [0 for i in range(len(pop))]
+        for i in range(len(pop)):
+            for j in range(len(fixed_arms)):
+                combined_fitnesses[sorted_metrics[j][i][1]] += sorted_metrics[j][i][0]
+
+    for i in range(len(pop)):
+        pop[i].stats = {'fitness': combined_fitnesses[i]}
 
 def test_pop(pop):#, noise_rate=50, noise_weight=1):
     #test the whole population and return scores
@@ -557,8 +584,8 @@ def save_champion(agent_pop):
         best_score = -1000000
         for i in range(len(agent_pop)):
             try:
-                if agent_pop[i].stats['score'] > best_score:
-                    best_score = agent_pop[i].stats['score']
+                if agent_pop[i].stats['fitness'] > best_score:
+                    best_score = agent_pop[i].stats['fitness']
                     best_agent = i
             except:
                 None
@@ -594,21 +621,33 @@ def save_champion(agent_pop):
             for i in NEAT_pop.champions[iteration].stats:
                 writer.writerow(["fitness {}".format(i), NEAT_pop.champions[iteration].stats[i]])
             file.close()
+        with open('NEAT bandit stats {}.csv'.format(config), 'w') as file:
+            writer = csv.writer(file, delimiter=',', lineterminator='\n')
+            for key in keys:
+                writer.writerow(['maximum fitness'])
+                writer.writerow(NEAT_pop.stats[key+'_max'])
+                writer.writerow(['average fitness'])
+                writer.writerow(NEAT_pop.stats[key+'_avg'])
+                writer.writerow(['minimum fitness'])
+                writer.writerow(NEAT_pop.stats[key+'_min'])
+            file.close()
 
 # gc.set_debug(gc.DEBUG_LEAK)
 
 
 number_of_arms = 2
 number_of_epochs = 2
-fixed_arms = [[0.9, 0.1], [0.1, 0.9]]
+# fixed_arms = [[0.9, 0.1], [0.1, 0.9]]
+fixed_arms = [[0, 1], [1, 0]]
 complimentary = True
 shared_probabilities = True
 grooming = 'cap'
 reward_based = 0
 spike_cap = 30000
 spike_weight = 0.1
-noise_rate = 0
+noise_rate = 100
 noise_weight = 0.01
+keys = ['fitness']
 
 # UDP port to read spikes from
 UDP_PORT1 = 17887
@@ -633,7 +672,7 @@ weight = 0.1
 # exec_bandit = False
 exec_bandit = True
 
-config = 'a{} -e{} - c{} - s{} - n{}-{} - g{} - r{}'.format(number_of_arms, number_of_epochs, complimentary,
+config = 'a{}:{} -e{} - c{} - s{} - n{}-{} - g{} - r{}'.format(number_of_arms, fixed_arms[0], number_of_epochs, complimentary,
                                                                         shared_probabilities, noise_rate, noise_weight,
                                                                         grooming, reward_based)
 
@@ -653,8 +692,8 @@ genotype = lambda: NEATGenotype(inputs=input_size,
 
 # Create a population
 NEAT_pop = NEATPopulation(genotype, popsize=100,
-                             stagnation_age=40,
-                             old_age=100,
+                             stagnation_age=20,
+                             old_age=30,
                              target_species=8)
 
 # Run the evolution, tell it to use the task as an evaluator
