@@ -33,21 +33,21 @@ def get_scores(bandit_pop, simulator):
 
     return scores.tolist()
 
-def thread_bandit(pop, split=1, top=True):
+def thread_bandit(pop, thread_arms, split=1, top=True):
     def helper(args):
         return test_pop(*args)
 
     step_size = len(pop) / split
     if step_size == 0:
         step_size = 1
-    if isinstance(arms[0], list):
+    if isinstance(thread_arms[0], list):
         pop_threads = []
-        all_configs = [[[pop[x:x + step_size], arm] for x in xrange(0, len(pop), step_size)] for arm in arms]
+        all_configs = [[[pop[x:x + step_size], arm] for x in xrange(0, len(pop), step_size)] for arm in thread_arms]
         for arm in all_configs:
             for config in arm:
                 pop_threads.append(config)
     else:
-        pop_threads = [[pop[x:x + step_size], arms] for x in xrange(0, len(pop), step_size)]
+        pop_threads = [[pop[x:x + step_size], thread_arms] for x in xrange(0, len(pop), step_size)]
     pool = pathos.multiprocessing.Pool(processes=len(pop_threads))
 
     pool_result = pool.map(func=helper, iterable=pop_threads)
@@ -67,10 +67,10 @@ def thread_bandit(pop, split=1, top=True):
         else:
             agent_fitness.append(thread)
 
-    if isinstance(arms[0], list) and top:
+    if isinstance(thread_arms[0], list) and top:
         copy_fitness = deepcopy(agent_fitness)
         agent_fitness = []
-        for i in range(len(arms)):
+        for i in range(len(thread_arms)):
             arm_results = []
             for j in range(len(pop)):
                 arm_results.append(copy_fitness[(i * len(pop)) + j])
@@ -285,6 +285,6 @@ def print_fitnesses(fitnesses):
 
 
 
-fitnesses = thread_bandit(pop)
+fitnesses = thread_bandit(pop, arms)
 
 print_fitnesses(fitnesses)
