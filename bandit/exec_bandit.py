@@ -108,8 +108,18 @@ def test_pop(pop, local_arms):#, noise_rate=50, noise_weight=1):
         hidden_marker = []
         output_pops = []
         # Setup pyNN simulation
-        p.setup(timestep=1.0)
-        p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+        try:
+            p.setup(timestep=1.0)
+            p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+        except:
+            print "set up failed, trying again"
+            try:
+                p.setup(timestep=1.0)
+                p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+            except:
+                print "set up failed, trying again for the last time"
+                p.setup(timestep=1.0)
+                p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
         for i in range(len(pop)):
             if i not in flagged_agents:
                 number_of_nodes = len(pop[i].node_genes)
