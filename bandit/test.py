@@ -64,47 +64,6 @@ Figure(
 )
 plt.show()
 
-# pylab.figure()
-# ax = pylab.subplot(1, 3, 1)#4, 1)
-# pylab.plot([i[1] for i in spikes_on], [i[0] for i in spikes_on], "r.")
-# pylab.xlabel("Time (ms)")
-# pylab.ylabel("neuron ID")
-# pylab.axis([0, runtime, -1, input_size + 1])
-# # pylab.show()
-# # pylab.figure()
-# # spikes_on = arms_pop.getSpikes()
-# # ax = pylab.subplot(1, 3, 2)#4, 1)
-# # pylab.plot([i[1] for i in spikes_on], [i[0] for i in spikes_on], "r.")
-# # pylab.xlabel("Time (ms)")
-# # pylab.ylabel("neuron ID")
-# # pylab.axis([0, runtime, -1, input_size + 1])
-# # pylab.show()
-# # pylab.figure()
-# spikes_on = output_pop.getSpikes()
-# ax = pylab.subplot(1, 3, 3)#4, 1)
-# pylab.plot([i[1] for i in spikes_on], [i[0] for i in spikes_on], "r.")
-# pylab.xlabel("Time (ms)")
-# pylab.ylabel("neuron ID")
-# pylab.axis([0, runtime, -1, 1 + 1])
-# pylab.show()
-#
-#     #     spikes.append(neuron_pop[j].get_data("spikes"))
-#     #     v.append(neuron_pop[j].get_data("v"))
-#     # Figure(
-#     #     # raster plot of the presynaptic neuron spike times
-#     #     Panel(spikes[0+((i/time_slice)*agent_neurons)].segments[0].spiketrains,
-#     #           yticks=True, markersize=2, xlim=(0, i+time_slice)),
-#     #     Panel(spikes[1+((i/time_slice)*agent_neurons)].segments[0].spiketrains,
-#     #           yticks=True, markersize=2, xlim=(0, i+time_slice)),
-#     #     Panel(spikes[2+((i/time_slice)*agent_neurons)].segments[0].spiketrains,
-#     #           yticks=True, markersize=2, xlim=(0, i+time_slice)),
-#     #     Panel(spikes[3+((i/time_slice)*agent_neurons)].segments[0].spiketrains,
-#     #           yticks=True, markersize=2, xlim=(0, i+time_slice)),
-#     #     Panel(spikes[4+((i/time_slice)*agent_neurons)].segments[0].spiketrains,
-#     #           yticks=True, markersize=2, xlim=(0, i+time_slice)),
-#     #     title="Simple synfire chain example with injected spikes",
-#     #     annotations="Simulated with {}".format(p.name())
-
 p.end()
 
 
