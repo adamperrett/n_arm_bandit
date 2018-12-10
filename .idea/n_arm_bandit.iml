@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="spalloc_server" />
     <orderEntry type="module" module-name="spinn_common" />
     <orderEntry type="module" module-name="sPyNNaker8" />
+    <orderEntry type="module" module-name="SpiNNFrontEndCommon" />
   </component>
 </module>
