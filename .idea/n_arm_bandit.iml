@@ -16,5 +16,7 @@
     <orderEntry type="module" module-name="spinn_common" />
     <orderEntry type="module" module-name="sPyNNaker8" />
     <orderEntry type="module" module-name="SpiNNFrontEndCommon" />
+    <orderEntry type="module" module-name="SpiNNakerGraphFrontEnd" />
+    <orderEntry type="module" module-name="SpiNNStorageHandlers" />
   </component>
 </module>
