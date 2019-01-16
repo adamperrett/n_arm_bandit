@@ -122,7 +122,8 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
         'incoming_spike_buffer_size': None,
         'duration': MAX_SIM_DURATION,
         'arms': [0.1, 0.9],
-        'random_seed': [1,2,3,4]}
+        'random_seed': [numpy.random.randint(10000), numpy.random.randint(10000),
+                        numpy.random.randint(10000), numpy.random.randint(10000)]}
 
     # **HACK** for Projection to connect a synapse type is required
     # synapse_type = BanditSynapseType()
