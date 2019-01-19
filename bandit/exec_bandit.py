@@ -179,77 +179,76 @@ def test_pop(pop, local_arms):#, noise_rate=50, noise_weight=1):
                     hidden_node_pops[hidden_count].record('spikes')
 
                 # Create the remaining nodes from the connection matrix and add them up
-                    # Create the remaining nodes from the connection matrix and add them up
-                    # if len(i2i_ex) != 0:
-                    #     connection = p.FromListConnector(i2i_ex)
-                    #     p.Projection(bandit_pops[i], bandit_pops[i], connection,
-                    #                  receptor_type='excitatory')
-                    if len(i2h_ex) != 0:
-                        connection = p.FromListConnector(i2h_ex)
-                        p.Projection(bandit_pops[i], hidden_node_pops[hidden_count], connection,
-                                     receptor_type='excitatory')
-                    if len(i2o_ex) != 0:
-                        connect_to_arms(bandit_pops[i], i2o_ex, bandit_arms[i], 'excitatory')
-                        # connection = p.FromListConnector(i2o_ex)
-                        # p.Projection(bandit_pops[i], output_pops[i], connection,
-                        #              receptor_type='excitatory')
-                    # if len(h2i_ex) != 0:
-                    #     p.Projection(hidden_node_pops[hidden_count], bandit_pops[i], p.FromListConnector(h2i_ex),
-                    #                  receptor_type='excitatory')
-                    if len(h2h_ex) != 0:
-                        p.Projection(hidden_node_pops[hidden_count], hidden_node_pops[hidden_count],
-                                     p.FromListConnector(h2h_ex),
-                                     receptor_type='excitatory')
-                    if len(h2o_ex) != 0:
-                        connect_to_arms(hidden_node_pops[hidden_count], h2o_ex, bandit_arms[i], 'excitatory')
-                        # p.Projection(hidden_node_pops[hidden_count], output_pops[i], p.FromListConnector(h2o_ex),
-                        #              receptor_type='excitatory')
-                    # if len(o2i_ex) != 0:
-                    #     p.Projection(output_pops[i], bandit_pops[i], p.FromListConnector(o2i_ex),
-                    #                  receptor_type='excitatory')
-                    # if len(o2h_ex) != 0:
-                    #     p.Projection(output_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(o2h_ex),
-                    #                  receptor_type='excitatory')
-                    # if len(o2o_ex) != 0:
-                    #     p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_ex),
-                    #                  receptor_type='excitatory')
-                    # if len(i2i_in) != 0:
-                    #     p.Projection(bandit_pops[i], bandit_pops[i], p.FromListConnector(i2i_in),
-                    #                  receptor_type='inhibitory')
-                    if len(i2h_in) != 0:
-                        p.Projection(bandit_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(i2h_in),
-                                     receptor_type='inhibitory')
-                    if len(i2o_in) != 0:
-                        connect_to_arms(bandit_pops[i], i2o_in, bandit_arms[i], 'inhibitory')
-                        # p.Projection(bandit_pops[i], output_pops[i], p.FromListConnector(i2o_in),
-                        #              receptor_type='inhibitory')
-                    # if len(h2i_in) != 0:
-                    #     p.Projection(hidden_node_pops[hidden_count], bandit_pops[i], p.FromListConnector(h2i_in),
-                    #                  receptor_type='inhibitory')
-                    if len(h2h_in) != 0:
-                        p.Projection(hidden_node_pops[hidden_count], hidden_node_pops[hidden_count],
-                                     p.FromListConnector(h2h_in),
-                                     receptor_type='inhibitory')
-                    if len(h2o_in) != 0:
-                        connect_to_arms(hidden_node_pops[hidden_count], h2o_in, bandit_arms[i], 'inhibitory')
-                        # p.Projection(hidden_node_pops[hidden_count], output_pops[i], p.FromListConnector(h2o_in),
-                        #              receptor_type='inhibitory')
-                    # if len(o2i_in) != 0:
-                    #     p.Projection(output_pops[i], bandit_pops[i], p.FromListConnector(o2i_in),
-                    #                  receptor_type='inhibitory')
-                    # if len(o2h_in) != 0:
-                    #     p.Projection(output_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(o2h_in),
-                    #                  receptor_type='inhibitory')
-                    # if len(o2o_in) != 0:
-                    #     p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_in),
-                    #                  receptor_type='inhibitory')
-                    # if len(i2i_in) == 0 and len(i2i_ex) == 0 and \
-                    if len(i2h_in) == 0 and len(i2h_ex) == 0 and \
-                            len(i2o_in) == 0 and len(i2o_ex) == 0:
-                        print ("empty out from bandit, adding empty pop to complete link")
-                        empty_post = p.Population(1, p.IF_cond_exp(), label="empty_post {}".format(i))
-                        p.Projection(bandit_pops[i], empty_post, p.AllToAllConnector())
-                        empty_post_count += 1
+                # if len(i2i_ex) != 0:
+                #     connection = p.FromListConnector(i2i_ex)
+                #     p.Projection(bandit_pops[i], bandit_pops[i], connection,
+                #                  receptor_type='excitatory')
+                if len(i2h_ex) != 0:
+                    connection = p.FromListConnector(i2h_ex)
+                    p.Projection(bandit_pops[i], hidden_node_pops[hidden_count], connection,
+                                 receptor_type='excitatory')
+                if len(i2o_ex) != 0:
+                    connect_to_arms(bandit_pops[i], i2o_ex, bandit_arms[i], 'excitatory')
+                    # connection = p.FromListConnector(i2o_ex)
+                    # p.Projection(bandit_pops[i], output_pops[i], connection,
+                    #              receptor_type='excitatory')
+                # if len(h2i_ex) != 0:
+                #     p.Projection(hidden_node_pops[hidden_count], bandit_pops[i], p.FromListConnector(h2i_ex),
+                #                  receptor_type='excitatory')
+                if len(h2h_ex) != 0:
+                    p.Projection(hidden_node_pops[hidden_count], hidden_node_pops[hidden_count],
+                                 p.FromListConnector(h2h_ex),
+                                 receptor_type='excitatory')
+                if len(h2o_ex) != 0:
+                    connect_to_arms(hidden_node_pops[hidden_count], h2o_ex, bandit_arms[i], 'excitatory')
+                    # p.Projection(hidden_node_pops[hidden_count], output_pops[i], p.FromListConnector(h2o_ex),
+                    #              receptor_type='excitatory')
+                # if len(o2i_ex) != 0:
+                #     p.Projection(output_pops[i], bandit_pops[i], p.FromListConnector(o2i_ex),
+                #                  receptor_type='excitatory')
+                # if len(o2h_ex) != 0:
+                #     p.Projection(output_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(o2h_ex),
+                #                  receptor_type='excitatory')
+                # if len(o2o_ex) != 0:
+                #     p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_ex),
+                #                  receptor_type='excitatory')
+                # if len(i2i_in) != 0:
+                #     p.Projection(bandit_pops[i], bandit_pops[i], p.FromListConnector(i2i_in),
+                #                  receptor_type='inhibitory')
+                if len(i2h_in) != 0:
+                    p.Projection(bandit_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(i2h_in),
+                                 receptor_type='inhibitory')
+                if len(i2o_in) != 0:
+                    connect_to_arms(bandit_pops[i], i2o_in, bandit_arms[i], 'inhibitory')
+                    # p.Projection(bandit_pops[i], output_pops[i], p.FromListConnector(i2o_in),
+                    #              receptor_type='inhibitory')
+                # if len(h2i_in) != 0:
+                #     p.Projection(hidden_node_pops[hidden_count], bandit_pops[i], p.FromListConnector(h2i_in),
+                #                  receptor_type='inhibitory')
+                if len(h2h_in) != 0:
+                    p.Projection(hidden_node_pops[hidden_count], hidden_node_pops[hidden_count],
+                                 p.FromListConnector(h2h_in),
+                                 receptor_type='inhibitory')
+                if len(h2o_in) != 0:
+                    connect_to_arms(hidden_node_pops[hidden_count], h2o_in, bandit_arms[i], 'inhibitory')
+                    # p.Projection(hidden_node_pops[hidden_count], output_pops[i], p.FromListConnector(h2o_in),
+                    #              receptor_type='inhibitory')
+                # if len(o2i_in) != 0:
+                #     p.Projection(output_pops[i], bandit_pops[i], p.FromListConnector(o2i_in),
+                #                  receptor_type='inhibitory')
+                # if len(o2h_in) != 0:
+                #     p.Projection(output_pops[i], hidden_node_pops[hidden_count], p.FromListConnector(o2h_in),
+                #                  receptor_type='inhibitory')
+                # if len(o2o_in) != 0:
+                #     p.Projection(output_pops[i], output_pops[i], p.FromListConnector(o2o_in),
+                #                  receptor_type='inhibitory')
+                # if len(i2i_in) == 0 and len(i2i_ex) == 0 and \
+                if len(i2h_in) == 0 and len(i2h_ex) == 0 and \
+                        len(i2o_in) == 0 and len(i2o_ex) == 0:
+                    print ("empty out from bandit, adding empty pop to complete link")
+                    empty_post = p.Population(1, p.IF_cond_exp(), label="empty_post {}".format(i))
+                    p.Projection(bandit_pops[i], empty_post, p.AllToAllConnector())
+                    empty_post_count += 1
 
         print "reached here 1"
         # tracker.print_diff()
