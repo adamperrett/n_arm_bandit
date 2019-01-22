@@ -37,7 +37,7 @@
 typedef enum
 {
   REGION_SYSTEM,
-  REGION_BREAKOUT,
+  REGION_BANDIT,
   REGION_RECORDING,
   REGION_ARMS,
 } region_t;
@@ -160,7 +160,7 @@ static bool initialize(uint32_t *timer_period)
 
 
     // Read breakout region
-    address_t breakout_region = data_specification_get_region(REGION_BREAKOUT, address);
+    address_t breakout_region = data_specification_get_region(REGION_BANDIT, address);
     key = breakout_region[0];
     io_printf(IO_BUF, "\tKey=%08x\n", key);
     io_printf(IO_BUF, "\tTimer period=%d\n", *timer_period);
@@ -202,7 +202,9 @@ static bool initialize(uint32_t *timer_period)
     io_printf(IO_BUF, "r4 0x%x\n", arms_region[3]);
     io_printf(IO_BUF, "r5 0x%x\n", arm_probabilities);
     io_printf(IO_BUF, "r6 %u\n", arm_probabilities[0]);
+    io_printf(IO_BUF, "r6d %d\n", arm_probabilities[0]);
     io_printf(IO_BUF, "r7 %u\n", arm_probabilities[1]);
+    io_printf(IO_BUF, "r7d %d\n", arm_probabilities[1]);
     io_printf(IO_BUF, "re %d\n", reward_based);
 //    io_printf(IO_BUF, "r6 0x%x\n", *arm_probabilities);
 //    io_printf(IO_BUF, "r6 0x%x\n", &arm_probabilities);
@@ -216,6 +218,7 @@ static bool initialize(uint32_t *timer_period)
     }
 
     io_printf(IO_BUF, "Initialise: completed successfully\n");
+    io_printf(IO_BUF, "best arm = %d with prob %d\n", best_arm, highest_prob);
 
     return true;
 }
@@ -293,6 +296,8 @@ void mc_packet_received_callback(uint key, uint payload)
     uint32_t compare;
     compare = key & 0x7;
 //    io_printf(IO_BUF, "compare = %x\n", compare);
+//    io_printf(IO_BUF, "key = %x\n", key);
+//    io_printf(IO_BUF, "payload = %x\n", payload);
     use(payload);
     if(compare == KEY_ARM_0){
         arm_choices[0]++;

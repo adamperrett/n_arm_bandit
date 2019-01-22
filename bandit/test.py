@@ -42,6 +42,7 @@ i2a = p.Projection(input_pop, arms_pop, p.AllToAllConnector())
 
 #neuron ID 0 = reward
 #neuron ID 1 = no reward
+test_rec = p.Projection(arms_pop, arms_pop, p.AllToAllConnector(), p.StaticSynapse(weight=0.1, delay=0.5))
 i2o1 = p.Projection(arms_pop, output_pop1, p.AllToAllConnector(), p.StaticSynapse(weight=0.1, delay=0.5))
 i2o2 = p.Projection(arms_pop, output_pop2, p.OneToOneConnector(), p.StaticSynapse(weight=0.1, delay=0.5))
 
