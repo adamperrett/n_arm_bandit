@@ -51,6 +51,10 @@ from spynnaker.pyNN.utilities import constants
 from spynnaker.pyNN.models.common.simple_population_settable \
     import SimplePopulationSettable
 
+from spinn_front_end_common.abstract_models\
+   .abstract_provides_n_keys_for_partition \
+   import AbstractProvidesNKeysForPartition
+
 # Bandit imports
 from bandit_machine_vertex import BanditMachineVertex
 
@@ -72,14 +76,16 @@ NUMPY_DATA_ELEMENT_TYPE = numpy.double
 # ----------------------------------------------------------------------------
 # Bandit
 # ----------------------------------------------------------------------------
-class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
-               AbstractHasAssociatedBinary,
-               AbstractProvidesOutgoingPartitionConstraints,
-               AbstractAcceptsIncomingSynapses,
-               AbstractNeuronRecordable,
-               SimplePopulationSettable
-               # AbstractBinaryUsesSimulationRun
-               ):
+class Bandit(ApplicationVertex,
+                AbstractGeneratesDataSpecification,
+                AbstractHasAssociatedBinary,
+                AbstractProvidesOutgoingPartitionConstraints,
+                AbstractAcceptsIncomingSynapses,
+                AbstractNeuronRecordable,
+                SimplePopulationSettable,
+                AbstractProvidesNKeysForPartition
+                # AbstractBinaryUsesSimulationRun
+                ):
 
     def get_connections_from_machine(self, transceiver, placement, edge, graph_mapper,
                                      routing_infos, synapse_information, machine_time_step):
@@ -103,6 +109,10 @@ class Bandit(ApplicationVertex, AbstractGeneratesDataSpecification,
 
     def clear_connection_cache(self):
         pass
+
+    @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
+    def get_n_keys_for_partition(self, partition, graph_mapper):
+        return 4  # 2  # two for control IDs
 
     @overrides(AbstractAcceptsIncomingSynapses.get_synapse_id_by_target)
     def get_synapse_id_by_target(self, target):
