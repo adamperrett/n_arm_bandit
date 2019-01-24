@@ -114,7 +114,7 @@ static inline void add_no_reward()
 {
   spin1_send_mc_packet(key | (SPECIAL_EVENT_NO_REWARD), 0, NO_PAYLOAD);
   io_printf(IO_BUF, "No reward\n");
-  current_score--;
+//  current_score--;
 }
 
 void resume_callback() {
