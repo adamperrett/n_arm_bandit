@@ -264,7 +264,7 @@ bool was_there_a_reward(){
         correct_pulls++;
     }
     else{
-        correct_pulls--;
+//        correct_pulls--;
     }
     if(highest_value == 0){
         return false;
