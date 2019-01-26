@@ -192,7 +192,7 @@ static bool initialize(uint32_t *timer_period)
 //        arm_probabilities[i] = (double)temp_arm_probabilities[i] / 1000.0
 //        io_printf(IO_BUF, "probs after = %d\n", arm_probabilities)
 //    }
-    validate_mars_kiss64_seed(rand_seed);
+    validate_mars_kiss64_seed(kiss_seed);
 //    srand(rand_seed);
     //TODO check this prints right, ybug read the address
     io_printf(IO_BUF, "r1 %d\n", (uint32_t *)arms_region[0]);
