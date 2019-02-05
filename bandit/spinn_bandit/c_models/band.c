@@ -291,10 +291,10 @@ bool was_there_a_reward(){
     }
 }
 
-void mc_packet_received_callback(uint key, uint payload)
+void mc_packet_received_callback(uint keyx, uint payload)
 {
     uint32_t compare;
-    compare = key & 0x7;
+    compare = keyx & 0x7;
 //    io_printf(IO_BUF, "compare = %x\n", compare);
 //    io_printf(IO_BUF, "key = %x\n", key);
 //    io_printf(IO_BUF, "payload = %x\n", payload);
