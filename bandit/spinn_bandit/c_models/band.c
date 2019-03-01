@@ -294,7 +294,12 @@ bool was_there_a_reward(){
 void mc_packet_received_callback(uint keyx, uint payload)
 {
     uint32_t compare;
-    compare = keyx & 0x7;
+    int max_number_of_bits = 8;
+    compare = keyx & (max_number_of_bits - 1);
+    while (compare > number_of_arms){
+        max_number_of_bits = max_number_of_bits / 2;
+        compare = keyx & (max_number_of_bits - 1);
+    }
 //    io_printf(IO_BUF, "compare = %x\n", compare);
 //    io_printf(IO_BUF, "key = %x\n", key);
 //    io_printf(IO_BUF, "payload = %x\n", payload);
